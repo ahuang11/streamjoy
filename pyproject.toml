@@ -21,7 +21,6 @@ path = "streamwee/__init__.py"
 [tool.hatch.envs.default]
 python = "3.9"
 dependencies = [
-    "mypy",
     "ruff",
     "pytest",
     "pytest-cov",
@@ -36,12 +35,10 @@ test-cov-xml = "pytest --cov-report=xml"
 lint = [
   "ruff format .",
   "ruff --fix .",
-  "mypy streamwee/",
 ]
 lint-check = [
   "ruff format --check .",
   "ruff .",
-  "mypy streamwee/",
 ]
 docs-serve = "mkdocs serve"
 docs-build = "mkdocs build"

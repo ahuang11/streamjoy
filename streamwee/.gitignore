@@ -1,0 +1,13 @@
+.DS_Store
+.vscode
+build
+dist
+docs/build/*
+__pycache__
+*.egg*
+*.ipynb_checkpoints/
+*.jpg
+*.png
+*.gif
+*.mp4
+*.ipynb

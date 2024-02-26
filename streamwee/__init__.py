@@ -1,22 +1,16 @@
-"""Animate, fast and easy"""
+import logging
+
+from .core import stream
+from .settings import config
+from .models import GifStream, Mp4Stream
 
 __version__ = "0.0.0"
 
+__all__ = ["config", "stream", "GifStream", "Mp4Stream"]
 
-def add(a: int, b: int) -> int:
-    """
-    Add two integers.
 
-    Args:
-        a:
-            The first operand.
-        b:
-            The second operand.
-
-    Examples:
-        Add two integers
-
-            r = add(2, 3)
-            print(r)  # 5
-    """
-    return a + b
+logging.basicConfig(
+    level=config["logging_level"].upper(),
+    format=config["logging_format"],
+    datefmt=config["logging_datefmt"],
+)
