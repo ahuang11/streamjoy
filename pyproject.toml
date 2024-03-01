@@ -60,6 +60,9 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
+    "param",
+    "dask[distributed]",
+    "imageio[pyav]>=2.34.0",
 ]
 
 [project.urls]
