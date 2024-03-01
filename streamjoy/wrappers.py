@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import wraps
-from io import BytesIO
 from pathlib import Path
 
 from . import _utils

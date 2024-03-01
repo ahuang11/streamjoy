@@ -1,6 +1,6 @@
 import pytest
 
-from streamwee import add
+from streamjoy import add
 
 
 @pytest.mark.parametrize(

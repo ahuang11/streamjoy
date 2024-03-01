@@ -32,6 +32,15 @@ class _MediaStream(param.Parameterized):
         """,
     )
 
+    max_frames = param.Integer(
+        default=None, doc="The maximum number of frames to render."
+    )
+
+    fps = param.Integer(
+        default=15,
+        doc="The number of frames per second to use for the output.",
+    )
+
     renderer = param.Callable(
         doc="A callable that renders the resources and outputs a uri or image."
     )
@@ -39,10 +48,6 @@ class _MediaStream(param.Parameterized):
     renderer_kwargs = param.Dict(
         default={},
         doc="A dictionary of keyword arguments to be passed to the renderer.",
-    )
-
-    max_frames = param.Integer(
-        default=None, doc="The maximum number of frames to render."
     )
 
     batch_size = param.Integer(
@@ -79,6 +84,7 @@ class _MediaStream(param.Parameterized):
         params["resources"] = resources
         if hasattr(resources, "tolist"):
             params["resources"] = params["resources"].tolist()
+        params["fps"] = _utils.get_config_default("fps", params.get("fps"), warn=False)
         params["batch_size"] = _utils.get_config_default(
             "batch_size", params.get("batch_size"), warn=False
         )
@@ -347,7 +353,7 @@ class _MediaStream(param.Parameterized):
         return path
 
     @abstractmethod
-    def _write_images(self, buf: PluginV3, images: list[Future], fps: int, **kwargs) -> None:
+    def _write_frames(self, buf: PluginV3, images: list[Future], **kwargs) -> None:
         """
         This method is responsible for writing images to the output buffer.
         """
@@ -355,7 +361,9 @@ class _MediaStream(param.Parameterized):
     def copy(self) -> _MediaStream:
         return self.__class__(**self.param.values())
 
-    def write(self, output_path: str | Path | None = None, fps: int | None = None, **kwargs) -> None:
+    def write(
+        self, output_path: str | Path | None = None, fps: int | None = None, **kwargs
+    ) -> None:
         output_path = self._validate_path(output_path)
         fps = _utils.get_config_default("fps", fps, warn=False)
 
@@ -402,7 +410,7 @@ class _MediaStream(param.Parameterized):
             images = resources
 
         with iio.imopen(output_path, "w", extension=self._extension) as buf:
-            self._write_images(buf, images, fps, **kwargs)
+            self._write_images(buf, images, **kwargs)
         del images
         del resource_0
         del resources
@@ -431,26 +439,27 @@ class _MediaStream(param.Parameterized):
         repr_str = (
             f"<{self.__class__.__name__}>\n"
             f"---\n"
-            f"Parameters:\n"
+            f"Output:\n"
             f"  max_frames: {self.max_frames}\n"
+            f"  fps: {self.fps}\n"
+            f"  display: {self.display}\n"
+        )
+        repr_str += (
+            f"---\n"
+            f"{str(self.client).lstrip('<').rstrip('>')}\n"
             f"  batch_size: {self.batch_size}\n"
             f"  processes: {self.processes}\n"
             f"  threads_per_worker: {self.threads_per_worker}\n"
-            f"  client: {self.client}\n"
-            f"  display: {self.display}\n"
         )
         if self.renderer:
-            repr_str += (
-                f"---\n"
-                f"Renderer: `{self.renderer.__name__}`\n"
-            )
+            repr_str += f"---\nRenderer: `{self.renderer.__name__}`\n"
             for key, value in self.renderer_kwargs.items():
                 if isinstance(value, (list, tuple)):
                     value = f"[{', '.join(map(str, value))}]"
                 elif isinstance(value, dict):
                     value = f"{{{', '.join(f'{k}: {str(v)[:88]}' for k, v in value.items())}}}"
                 repr_str += f"  {key}: {value}\n"
-        repr_str += (        
+        repr_str += (
             f"---\n"
             f"Resources: ({frames} frames)\n"
             f"{indent(str(self.resources[0]), ' ' * 2)}\n"
@@ -492,8 +501,8 @@ class Mp4Stream(_MediaStream):
         except Exception:
             return super()._display_in_notebook(obj)
 
-    def _write_images(self, buf: PyAVPlugin, images: list[Future], fps: int, **kwargs) -> None:
-        buf.init_video_stream(self.mp4_codec, fps=fps)
+    def _write_images(self, buf: PyAVPlugin, images: list[Future], **kwargs) -> None:
+        buf.init_video_stream(self.mp4_codec, fps=self.fps)
         for image in images:
             image = _utils.get_result(image)
             if image.shape[0] % 2:
@@ -538,8 +547,8 @@ class GifStream(_MediaStream):
         except Exception:
             return super()._display_in_notebook(obj)
 
-    def _write_images(self, buf: PillowPlugin, images: list[Future], fps: int, **kwargs) -> None:
-        duration = np.repeat(1 / fps, len(images))
+    def _write_images(self, buf: PillowPlugin, images: list[Future], **kwargs) -> None:
+        duration = np.repeat(1 / self.fps, len(images))
         duration[-1] = self.gif_pause
         duration = (duration * 1000).tolist()
         kwargs.update(loop=self.gif_loop, is_batch=False, duration=duration)

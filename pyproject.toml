@@ -5,7 +5,7 @@ target-version = "py39"
 extend-select = ["I", "TRY", "UP"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=streamwee/ --cov-report=term-missing"
+addopts = "--cov=streamjoy/ --cov-report=term-missing"
 
 
 [tool.hatch]
@@ -16,7 +16,7 @@ allow-direct-references = true
 [tool.hatch.version]
 source = "regex_commit"
 commit_extra_args = ["-e"]
-path = "streamwee/__init__.py"
+path = "streamjoy/__init__.py"
 
 [tool.hatch.envs.default]
 python = "3.9"
@@ -48,9 +48,9 @@ requires = ["hatchling", "hatch-regex-commit"]
 build-backend = "hatchling.build"
 
 [project]
-name = "streamwee"
+name = "streamjoy"
 authors = [
-  { name = "streamwee", email = "hey.at.py@gmail.com" }
+  { name = "streamjoy", email = "hey.at.py@gmail.com" }
 ]
 description = "Animate, fast and easy"
 readme = "README.md"
@@ -66,5 +66,5 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://ahuang11.github.io/streamwee/"
-Source = "https://github.com/ahuang11/streamwee"
+Documentation = "https://ahuang11.github.io/streamjoy/"
+Source = "https://github.com/ahuang11/streamjoy"

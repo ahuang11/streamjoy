@@ -8,7 +8,7 @@ except Exception as exc:
 from .core import stream
 
 
-def patch(name="streamwee"):
+def patch(name="streamjoy"):
     class StreamAccessor:
         def __init__(self, resources: xr.Dataset | xr.DataArray):
             self._resources = resources

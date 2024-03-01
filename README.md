@@ -1,18 +1,18 @@
-# streamwee
+# streamjoy
 
 <p align="center">
     <em>Animate, fast and easy</em>
 </p>
 
-[![build](https://github.com/ahuang11/streamwee/workflows/Build/badge.svg)](https://github.com/ahuang11/streamwee/actions)
-[![codecov](https://codecov.io/gh/ahuang11/streamwee/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamwee)
-[![PyPI version](https://badge.fury.io/py/streamwee.svg)](https://badge.fury.io/py/streamwee)
+[![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions)
+[![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy)
+[![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)
 
 ---
 
-**Documentation**: <a href="https://ahuang11.github.io/streamwee/" target="_blank">https://ahuang11.github.io/streamwee/</a>
+**Documentation**: <a href="https://ahuang11.github.io/streamjoy/" target="_blank">https://ahuang11.github.io/streamjoy/</a>
 
-**Source Code**: <a href="https://github.com/ahuang11/streamwee" target="_blank">https://github.com/ahuang11/streamwee</a>
+**Source Code**: <a href="https://github.com/ahuang11/streamjoy" target="_blank">https://github.com/ahuang11/streamjoy</a>
 
 ---
 
@@ -71,4 +71,4 @@ It'll automatically watch for changes in your code.
 ## License
 
 This project is licensed under the terms of the MIT license.
-# streamwee
+# streamjoy
