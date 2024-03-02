@@ -24,7 +24,7 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
             elif not isinstance(fig, plt.Figure):
                 raise ValueError("Function must return a Figure or Axes object.")
 
-            uri = _utils.resolve_uri(in_memory, scratch_dir, f"{id(fig)}.jpg")
+            uri = _utils.resolve_uri(in_memory, scratch_dir, f"{hash(fig)}.jpg")
             fig.savefig(uri, format="jpg")
             plt.close(fig)
             return uri

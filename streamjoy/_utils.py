@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 from dask.distributed import Client, Future, get_client
 
-from .settings import config, readers
+from .settings import config
 
 
 def update_logger(
@@ -43,14 +43,14 @@ def warn_default_used(
     color = config["logging_warning_color"]
     reset = config["logging_reset_color"]
     message = (
-        f"No {color}{key!r}{reset} specified; using the default: "
+        f"No {color}{key!r}{reset} specified; using the default "
         f"{color}{default_value!r}{reset}"
     )
     if total_value is not None:
         message += f" / {total_value!r}"
     if suffix:
         message += f" {suffix}"
-    message += f". To suppress this warning, pass {key!r}."
+    message += f". Suppress this by passing {key!r}."
     logging.warn(message)
 
 
@@ -74,19 +74,20 @@ def get_distributed_client(client: Client | None = None, **kwargs) -> Client:
     return client
 
 
-def download_file(base_url: str, scratch_dir: Path, file: str) -> Path:
-    import httpx
+def download_file(base_url: str, scratch_dir: Path, file: str) -> str:
+    import requests
 
     url = base_url + file
     path = scratch_dir / file
     if path.exists():
         return path
 
-    with httpx.stream("GET", url) as response:
-        response.raise_for_status()
-        with open(path, "wb") as buf:
-            for chunk in response.iter_bytes():
-                buf.write(chunk)
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    with open(path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
     return path
 
 

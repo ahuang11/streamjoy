@@ -2,11 +2,11 @@ import logging
 
 from .core import stream
 from .models import GifStream, Mp4Stream
-from .settings import config, readers
+from .settings import config, file_readers, obj_readers
 
 __version__ = "0.0.0"
 
-__all__ = ["config", "readers", "stream", "patches", "GifStream", "Mp4Stream"]
+__all__ = ["config", "file_readers", "obj_readers", "stream", "patches", "GifStream", "Mp4Stream"]
 
 
 logging.basicConfig(

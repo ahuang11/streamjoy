@@ -1,6 +1,6 @@
 config = {
     "fps": 15,
-    "url_limit": 1,
+    "max_urls": 1,
     "batch_size": 10,
     "max_frames": 100,
     "max_open_warning": 100,
@@ -15,14 +15,28 @@ config = {
     "output_path": "streamjoy",
     "mp4_codec": "libx264",
     "gif_loop": 0,
-    "gif_pause": 2,
+    "gif_pause": 4,
 }
 
-readers = {
+obj_readers = {
     "xarray.Dataset": "from_xarray",
     "xarray.DataArray": "from_xarray",
     "pandas.DataFrame": "from_pandas",
     "pandas.Series": "from_pandas",
     "holoviews.DynamicMap": "from_holoviews",
     "holoviews.HoloMap": "from_holoviews",
+}
+
+file_readers = {
+    ".nc": {"import_path": "xarray.open_mfdataset", "batched": True},
+    ".nc4": {"import_path": "xarray.open_mfdataset", "batched": True},
+    ".zarr": {"import_path": "xarray.open_zarr", "batched": True},
+    ".grib": {
+        "import_path": "xarray.open_mfdataset",
+        "kwargs": {"engine": "cfgrib"},
+        "batched": True,
+    },
+    ".csv": {"import_path": "pandas.read_csv", "batched": False},
+    ".json": {"import_path": "pandas.read_json", "batched": False},
+    ".html": {"import_path": "pandas.read_html", "batched": False},
 }

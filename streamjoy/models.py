@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import gc
+import re
 from abc import abstractmethod
 from textwrap import indent
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import dask.delayed
 import imageio.v3 as iio
@@ -13,10 +14,75 @@ import numpy as np
 import param
 from dask.distributed import Client, Future, fire_and_forget
 from imageio.core.v3_plugin_api import PluginV3
+from PIL import Image, ImageDraw, ImageFont
 
 from . import _utils
-from .settings import config, readers
+from .settings import config, obj_readers, file_readers
 from .wrappers import wrap_holoviews, wrap_matplotlib
+
+
+class ImageText(param.Parameterized):
+
+    text = param.String(
+        default=None,
+        doc="The text to render.",
+    )
+
+    font = param.String(
+        default="Avenir.ttc",
+        doc="The font to use for the text.",
+    )
+
+    size = param.Integer(
+        default=35,
+        doc="The font size to use for the text.",
+    )
+
+    color = param.String(
+        default="white",
+        doc="The color to use for the text.",
+    )
+
+    anchor = param.String(
+        default="ms",
+        doc="The anchor to use for the text.",
+    )
+
+    x = param.Integer(
+        default=None,
+        doc="The x-coordinate to use for the text.",
+    )
+
+    y = param.Integer(
+        default=None,
+        doc="The y-coordinate to use for the text.",
+    )
+
+    kwargs = param.Dict(
+        default={},
+        doc="Additional keyword arguments to pass to the text renderer.",
+    )
+
+    def render(
+        self,
+        draw: ImageDraw,
+        width: int | None = None,
+        height: int | None = None,
+    ) -> None:
+        x = self.x or width // 2
+        y = self.y or height // 2
+        try:
+            font = ImageFont.truetype(self.font, self.size)
+        except Exception:
+            font = ImageFont.load_default()
+        draw.text(
+            (x, y),
+            self.text,
+            font=font,
+            fill=self.color,
+            anchor=self.anchor,
+            **self.kwargs,
+        )
 
 
 class _MediaStream(param.Parameterized):
@@ -32,15 +98,6 @@ class _MediaStream(param.Parameterized):
         """,
     )
 
-    max_frames = param.Integer(
-        default=None, doc="The maximum number of frames to render."
-    )
-
-    fps = param.Integer(
-        default=15,
-        doc="The number of frames per second to use for the output.",
-    )
-
     renderer = param.Callable(
         doc="A callable that renders the resources and outputs a uri or image."
     )
@@ -48,6 +105,64 @@ class _MediaStream(param.Parameterized):
     renderer_kwargs = param.Dict(
         default={},
         doc="A dictionary of keyword arguments to be passed to the renderer.",
+    )
+
+    intro_title = param.ClassSelector(
+        default=None,
+        class_=(str, ImageText),
+        doc="""
+        The title to use in the intro frame.
+        To customize the text, pass an ImageText instance.
+        """,
+    )
+
+    intro_subtitle = param.ClassSelector(
+        default=None,
+        class_=(str, ImageText),
+        doc="""
+        The subtitle to use in the intro frame.
+        To customize the text, pass an ImageText instance.
+        """,
+    )
+
+    intro_watermark = param.ClassSelector(
+        default="made with streamjoy",
+        class_=(str, ImageText),
+        doc="""
+        The watermark to use in the intro frame.
+        To customize the text, pass an ImageText instance.
+        """,
+    )
+
+    intro_pause = param.Number(
+        default=3,
+        doc="""
+        The duration in seconds to display the intro frame if
+        `intro_title` or `intro_subtitle` is set.
+        """,
+    )
+
+    intro_background = param.Color(
+        default="black",
+        doc="The background color to use in the intro frame.",
+    )
+
+    job_name = param.String(
+        default=None,
+        doc="""
+        The name to use for the job; will be used to organize
+        intermediate files in the directory within the scratch directory.
+        If not set, the stem from the output_path + "_job" will be used.
+        """
+    )
+
+    max_frames = param.Integer(
+        default=None, doc="The maximum number of frames to render."
+    )
+
+    fps = param.Integer(
+        default=None,
+        doc="The number of frames per second to use for the output.",
     )
 
     batch_size = param.Integer(
@@ -94,10 +209,10 @@ class _MediaStream(param.Parameterized):
             processes=self.processes,
             threads_per_worker=self.threads_per_worker,
         )
-        self._display_in_notebook(self.client)
+        self._display_in_notebook(self.client, is_media=False)
         self._extension = ""
 
-    def _display_in_notebook(self, obj: Any) -> None:
+    def _display_in_notebook(self, obj: Any, is_media: bool = True) -> None:
         if not _utils.using_notebook() or not self.display:
             return
         from IPython.display import display
@@ -111,7 +226,7 @@ class _MediaStream(param.Parameterized):
         elif isinstance(resources, str) and "://" in resources:
             return cls.from_url
 
-        for class_name, method_name in readers.items():
+        for class_name, method_name in obj_readers.items():
             # module of resources
             module = getattr(resources, "__module__", None).split(".", maxsplit=1)[0]
             type_ = type(resources).__name__
@@ -120,7 +235,7 @@ class _MediaStream(param.Parameterized):
 
         raise ValueError(
             f"Could not find a method to handle {type(resources)}; "
-            f"supported types are {list(readers.keys())}."
+            f"supported types are {list(obj_readers.keys())}."
         )
 
     @classmethod
@@ -139,6 +254,7 @@ class _MediaStream(param.Parameterized):
 
             fig = plt.figure()
             ax = plt.axes(**kwargs.pop("subplot_kws", {}))
+            kwargs["extend"] = kwargs.get("extend", "both")
             da_sel.plot(ax=ax, **kwargs)
             return fig
 
@@ -171,7 +287,6 @@ class _MediaStream(param.Parameterized):
             renderer_kwargs["vmax"] = renderer_kwargs.get(
                 "vmax", _utils.get_result(ds_0.max())
             )
-            renderer_kwargs["extend"] = renderer_kwargs.get("both")
             kwargs["renderer_kwargs"] = renderer_kwargs
         return cls(resources, **kwargs)
 
@@ -184,12 +299,23 @@ class _MediaStream(param.Parameterized):
     ) -> _MediaStream:
 
         @wrap_matplotlib()
-        def _default_pandas_renderer(df_sub, **kwargs):
+        def _default_pandas_renderer(df_sub, *args, **kwargs):
             import matplotlib.pyplot as plt
 
             fig, ax = plt.subplots()
+            title = kwargs.get("title")
+            if title and "{" in title and "}" in title:
+                # find the first item in {}
+                index = re.search(r"\{(.*?)\}", title).group(1)
+                if df_sub.index.name == index:
+                    title = df_sub.index[-1]
+                else:
+                    title = df_sub[index].iloc[-1]
+            elif title is None:
+                title = df_sub.index[-1]
+            kwargs["title"] = title
             for group, df_group in df_sub.groupby(groupby):
-                df_group.plot(ax=ax, label=group, **kwargs)
+                df_group.plot(*args, ax=ax, label=group, **kwargs)
             return fig
 
         max_frames = _utils.get_max_frames(
@@ -211,11 +337,17 @@ class _MediaStream(param.Parameterized):
                         if col != groupby:
                             break
                     renderer_kwargs["x"] = col
+                _utils.warn_default_used(
+                    "x", renderer_kwargs["x"], suffix="from the dataframe"
+                )
             if "y" not in renderer_kwargs:
                 for col in df.columns:
                     if col not in (renderer_kwargs["x"], groupby):
                         break
                 renderer_kwargs["y"] = col
+                _utils.warn_default_used(
+                    "y", renderer_kwargs["y"], suffix="from the dataframe"
+                )
             kwargs["renderer_kwargs"] = renderer_kwargs
 
         return cls(resources, **kwargs)
@@ -297,55 +429,97 @@ class _MediaStream(param.Parameterized):
         cls,
         base_url: str,
         pattern: str,
-        url_limit: int | None = None,
+        reader: Callable | None = None,
+        reader_kwargs: dict | None = None,
+        max_urls: int | None = None,
         scratch_dir: str | Path | None = None,
+        job_name: str | None = None,
         **kwargs,
     ) -> _MediaStream:
-        import re
+        def _try_read(reader, paths, **kwargs):
+            try:
+                return reader(paths, **kwargs)
+            except Exception:
+                return [reader(path, **kwargs) for path in paths]
 
-        import httpx
+        import re
+        import requests
         from bs4 import BeautifulSoup
 
         scratch_dir = Path(_utils.get_config_default("scratch_dir", scratch_dir))
+        kwargs["scratch_dir"] = scratch_dir
         scratch_dir.mkdir(exist_ok=True)
 
         client = _utils.get_distributed_client(kwargs.pop("client", None))
-        response = httpx.get(base_url)
+        response = requests.get(base_url)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
         href = re.compile(pattern.replace("*", ".*"))
         links = soup.find_all("a", href=href)
 
-        if url_limit is None:
-            url_limit = config["url_limit"]
+        if max_urls is None:
+            max_urls = config["max_urls"]
             _utils.warn_default_used(
-                "url_limit", f"{url_limit}", total_value=len(links), suffix="links."
+                "max_urls", f"{max_urls}", total_value=len(links), suffix="links."
             )
-            links = links[:url_limit]
-        elif url_limit > 0:
-            links = links[:url_limit]
+            links = links[:max_urls]
+        elif max_urls > 0:
+            links = links[:max_urls]
 
+        if len(links) == 0:
+            raise ValueError(
+                f"No links found with pattern {pattern!r} at {base_url!r}."
+            )
+
+        # first try the first link
+        link = links[0]
+        future = _utils.download_file(base_url, scratch_dir, link.get("href"))
+        path = _utils.get_result(future)
+
+        extension = path.suffix
+        if reader:
+            try:
+                _try_read(reader, [path], **reader_kwargs)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Could not read {path!r} with the given reader: {reader.__name__}"
+                ) from exc
+        elif extension in file_readers:
+            reader_meta = file_readers[extension]
+            import_path = reader_meta["import_path"]
+            reader_kwargs = reader_meta.get("kwargs", {})
+            package, function_name = import_path.split(".")
+            reader = getattr(
+                __import__(package, fromlist=[function_name]), function_name
+            )
+            _try_read(reader, [path], **reader_kwargs)
+
+        # now read all of them
         futures = [
             client.submit(_utils.download_file, base_url, scratch_dir, link.get("href"))
             for link in links
         ]
         paths = client.gather(futures)
 
-        if paths[0].suffix == ".nc":
-            import xarray as xr
+        resources = paths
+        if reader:
+            try:
+                resources = _try_read(reader, paths, **reader_kwargs)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Could not read {len(paths)} files with the given reader: {reader.__name__}"
+                ) from exc
+        cls_method = cls._select_method(resources)
+        return cls_method(resources, **kwargs)
 
-            ds = xr.open_mfdataset(paths)
-            return cls.from_xarray(ds, **kwargs)
-        return cls(paths, **kwargs)
-
-    def _validate_path(self, path):
+    def _validate_path(self, path: str | Path, match_extension: bool = True) -> Path:
         if path is None:
             path = _utils.get_config_default("output_path", path)
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(self._extension)
-        elif path.suffix != self._extension:
+        elif path.suffix != self._extension and match_extension:
             raise ValueError(
                 f"Expected {self._extension!r} extension; got {path.suffix!r}."
             )
@@ -353,19 +527,78 @@ class _MediaStream(param.Parameterized):
         return path
 
     @abstractmethod
-    def _write_frames(self, buf: PluginV3, images: list[Future], **kwargs) -> None:
+    def _write_images(self, buf: PluginV3, images: list[Future], **kwargs) -> None:
         """
         This method is responsible for writing images to the output buffer.
+        """
+
+    def _create_intro(self, images: list[Future], **kwargs) -> np.ndarray:
+        title = self.intro_title
+        subtitle = self.intro_subtitle
+        watermark = self.intro_watermark
+        if not (title or subtitle):
+            return
+
+        height, width = _utils.get_result(images[0]).shape[:2]
+        intro_frame = Image.new("RGB", (width, height), color=self.intro_background)
+        draw = ImageDraw.Draw(intro_frame)
+
+        if isinstance(title, str):
+            title_x = width // 2
+            title_y = height // 2
+            title = ImageText(
+                text=title,
+                x=title_x,
+                y=title_y,
+                anchor="ms",
+                size=50,
+                kwargs=dict(stroke_width=1),
+            )
+        if title:
+            title.render(draw, width, height)
+
+        if isinstance(subtitle, str):
+            subtitle_x = width // 2
+            subtitle_y = (height // 2) + title.size
+            subtitle = ImageText(
+                text=subtitle,
+                x=subtitle_x,
+                y=subtitle_y,
+                size=25,
+                anchor="ms",
+            )
+        if subtitle:
+            subtitle.render(draw, width, height)
+
+        if isinstance(watermark, str):
+            watermark_x = width - 20
+            watermark_y = height - 20
+            watermark = ImageText(
+                text=watermark,
+                x=watermark_x,
+                y=watermark_y,
+                size=15,
+                anchor="rb",
+            )
+        if watermark:
+            watermark.render(draw, width, height)
+
+        intro_frame = np.array(intro_frame)
+        return intro_frame
+
+    @abstractmethod
+    def _prepend_intro(self, buf: PluginV3, intro_frame: np.ndarray, **kwargs) -> None:
+        """
+        This method is responsible for prepending an intro frame to the output buffer.
         """
 
     def copy(self) -> _MediaStream:
         return self.__class__(**self.param.values())
 
     def write(
-        self, output_path: str | Path | None = None, fps: int | None = None, **kwargs
-    ) -> None:
+        self, output_path: str | Path | None = None, **kwargs
+    ) -> Path:
         output_path = self._validate_path(output_path)
-        fps = _utils.get_config_default("fps", fps, warn=False)
 
         max_frames = _utils.get_max_frames(len(self.resources), self.max_frames)
         resources = self.resources[:max_frames]
@@ -403,7 +636,7 @@ class _MediaStream(param.Parameterized):
                 iio.imread(resource_0)
             except Exception as exc:
                 raise ValueError(
-                    f"Expected a valid image URI; got {type(resource_0)}"
+                    f"Could not read the first resource as an image: {resource_0!r}"
                 ) from exc
             images = self.client.map(iio.imread, resources, batch_size=batch_size)
         else:
@@ -421,15 +654,15 @@ class _MediaStream(param.Parameterized):
         self.logger.success(f"Saved stream to {color}{output_path.absolute()}{reset}.")
         return output_path
 
-    def merge(self, other: _MediaStream) -> _MediaStream:
+    def concat(self, other: _MediaStream) -> _MediaStream:
         stream = self.copy()
-        for param_name, param_value in self.param.values():
+        for param_name, param_value in self.param.values().items():
             if param_value is None and getattr(other, param_name, None) is not None:
                 setattr(stream, param_name, getattr(other, param_name))
         return stream
 
     def __add__(self, other: _MediaStream) -> _MediaStream:
-        return self.merge(other)
+        return self.concat(other)
 
     def __copy__(self) -> _MediaStream:
         return self.copy()
@@ -440,6 +673,8 @@ class _MediaStream(param.Parameterized):
             f"<{self.__class__.__name__}>\n"
             f"---\n"
             f"Output:\n"
+            f"  intro_title: {self.intro_title}\n"
+            f"  intro_subtitle: {self.intro_subtitle}\n"
             f"  max_frames: {self.max_frames}\n"
             f"  fps: {self.fps}\n"
             f"  display: {self.display}\n"
@@ -464,7 +699,7 @@ class _MediaStream(param.Parameterized):
             f"Resources: ({frames} frames)\n"
             f"{indent(str(self.resources[0]), ' ' * 2)}\n"
             f"    ...\n"
-            f"{indent(str(self.resources[-1]), ' ' * 4)}\n"
+            f"{indent(str(self.resources[-1]), ' ' * 2)}\n"
         )
         if self.iterables:
             repr_str += (
@@ -493,16 +728,27 @@ class Mp4Stream(_MediaStream):
     def _display_in_notebook(
         self,
         obj: Any,
+        is_media: bool = True,
     ) -> None:
         from IPython.display import Video
 
-        try:
+        if is_media:
             return super()._display_in_notebook(Video(obj))
-        except Exception:
+        else:
             return super()._display_in_notebook(obj)
+
+    def _prepend_intro(self, buf: PyAVPlugin, intro_frame: np.ndarray, **kwargs):
+        if intro_frame is None:
+            return
+
+        for _ in range(int(self.fps * self.intro_pause)):
+            buf.write_frame(intro_frame, **kwargs)
 
     def _write_images(self, buf: PyAVPlugin, images: list[Future], **kwargs) -> None:
         buf.init_video_stream(self.mp4_codec, fps=self.fps)
+
+        intro_frame = self._create_intro(images, **kwargs)
+        self._prepend_intro(buf, intro_frame, **kwargs)
         for image in images:
             image = _utils.get_result(image)
             if image.shape[0] % 2:
@@ -511,7 +757,7 @@ class Mp4Stream(_MediaStream):
                 image = image[:, :-1, :]
             buf.write_frame(image[:, :, :3], **kwargs)
 
-    def write(self, output_path: str | Path | None = None, **kwargs) -> None:
+    def write(self, output_path: str | Path | None = None, **kwargs) -> Path:
         output_path = self._validate_path(output_path)
         output_path = super().write(output_path, **kwargs)
         self._display_in_notebook(str(output_path))
@@ -539,27 +785,55 @@ class GifStream(_MediaStream):
         super().__init__(resources, **params)
         self._extension = ".gif"
 
-    def _display_in_notebook(self, obj: Any) -> None:
+    def _display_in_notebook(self, obj: Any, is_media: bool = True) -> None:
         from IPython.display import Image
 
-        try:
+        if is_media:
             return super()._display_in_notebook(Image(obj))
-        except Exception:
+        else:
             return super()._display_in_notebook(obj)
 
+    def _prepend_intro(self, buf: PillowPlugin, intro_frame: np.ndarray, **kwargs):
+        if intro_frame is None:
+            return
+
+        for _ in range(int(self.fps * self.intro_pause)):
+            buf.write(intro_frame, **kwargs)
+
     def _write_images(self, buf: PillowPlugin, images: list[Future], **kwargs) -> None:
-        duration = np.repeat(1 / self.fps, len(images))
+        intro_frame = self._create_intro(images, **kwargs)
+        num_frames = len(images)
+        if intro_frame is not None:
+            num_frames += int(self.fps * self.intro_pause)
+        duration = np.repeat(1 / self.fps, num_frames)
         duration[-1] = self.gif_pause
         duration = (duration * 1000).tolist()
         kwargs.update(loop=self.gif_loop, is_batch=False, duration=duration)
+
+        self._prepend_intro(buf, intro_frame, **kwargs)
         for image in images:
             image_3d = _utils.get_result(image)[:, :, :3]
             buf.write(image_3d, **kwargs)
             del image
             del image_3d
 
-    def write(self, output_path: str | Path | None = None, **kwargs) -> None:
+    def write(self, output_path: str | Path | None = None, **kwargs) -> Path:
         output_path = self._validate_path(output_path)
         output_path = super().write(output_path, **kwargs)
         self._display_in_notebook(output_path)
         return output_path
+
+
+class AnyStream(_MediaStream):
+
+    def _display_in_notebook(self, obj: Any, is_media: bool = True) -> None:
+        return
+
+    def write(self, output_path: str | Path | None = None, **kwargs) -> Path:
+        output_path = self._validate_path(output_path, match_extension=False)
+        if output_path.suffix == ".mp4":
+            stream_cls = Mp4Stream
+        elif output_path.suffix == ".gif":
+            stream_cls = GifStream
+        stream = stream_cls(**self.param.values())
+        return stream.write(output_path, **kwargs)
