@@ -23,8 +23,10 @@ def update_logger(
             if self.isEnabledFor(success_level):
                 self._log(success_level, message, args, **kws)
 
+    color = config["logging_success_color"]
+    reset = config["logging_reset_color"]
     logging.setLoggerClass(CustomLogger)
-    logging.addLevelName(success_level, "SUCCESS")
+    logging.addLevelName(success_level, f"{color}SUCCESS{reset}")
     logger = logging.getLogger(__name__)
 
     level = level or config["logging_level"]
@@ -54,13 +56,43 @@ def warn_default_used(
     logging.warn(message)
 
 
-def get_config_default(key: str, value: Any, warn: bool = True) -> Any:
+def get_config_default(
+    key: str,
+    value: Any,
+    warn: bool = True,
+    require: bool = True,
+    config_prefix: str = "",
+    **warn_kwargs,
+) -> Any:
+    config_alias = f"{config_prefix}_{key}" if config_prefix else key
+    if require and config_alias not in config:
+        raise ValueError(f"Missing required config key: {config_alias}")
+
     if value is None:
-        default = config[key]
+        default = config[config_alias]
         if warn:
-            value = warn_default_used(key, default)
+            value = warn_default_used(key, default, **warn_kwargs)
         value = default
     return value
+
+
+def populate_config_defaults(
+    params: dict[str, Any],
+    keys: list[str],
+    warn_on: list[str] | None = None,
+    config_prefix: str = "",
+):
+    for key in keys:
+        config_alias = f"{config_prefix}_{key}" if config_prefix else key
+        if config_alias not in config.keys():
+            continue
+        warn = key in (warn_on or [])
+        value = get_config_default(
+            key, params.get(key), warn=warn, config_prefix=config_prefix
+        )
+        params[key] = value
+    params = {key: value for key, value in params.items() if value is not None}
+    return params
 
 
 def get_distributed_client(client: Client | None = None, **kwargs) -> Client:
@@ -74,21 +106,25 @@ def get_distributed_client(client: Client | None = None, **kwargs) -> Client:
     return client
 
 
-def download_file(base_url: str, scratch_dir: Path, file: str) -> str:
+def download_file(
+    url: str,
+    scratch_dir: Path | None = None,
+    in_memory: bool = False,
+) -> str:
     import requests
 
-    url = base_url + file
-    path = scratch_dir / file
-    if path.exists():
-        return path
+    file_name = Path(url).name
+    uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
+    if isinstance(uri, Path) and uri.exists():
+        return uri
 
     response = requests.get(url, stream=True)
     response.raise_for_status()
-    with open(path, "wb") as f:
+    with open(uri, "wb") as f:
         for chunk in response.iter_content(chunk_size=8192):
             if chunk:
                 f.write(chunk)
-    return path
+    return uri
 
 
 def get_max_frames(total_frames: int, max_frames: int) -> int:
@@ -102,6 +138,8 @@ def get_max_frames(total_frames: int, max_frames: int) -> int:
         )
         max_frames = default_max_frames
     elif max_frames is None:
+        max_frames = total_frames
+    elif max_frames > total_frames:
         max_frames = total_frames
     elif max_frames == -1:
         max_frames = total_frames
@@ -128,17 +166,44 @@ def using_notebook():
     return True
 
 
-def resolve_uri(in_memory: bool, scratch_dir: str | Path | None, file_name: str):
+def resolve_uri(
+    file_name: str | None = None,
+    scratch_dir: str | Path | None = None,
+    in_memory: bool = False,
+) -> Path | BytesIO:
     if in_memory:
-        uri = BytesIO()
-    else:
-        output_dir = Path(get_config_default("scratch_dir", scratch_dir, warn=False))
-        uri = output_dir / file_name
+        return BytesIO()
+
+    output_dir = Path(get_config_default("scratch_dir", scratch_dir, warn=False))
+    output_dir.mkdir(exist_ok=True, parents=True)
+    uri = output_dir / file_name
     return uri
 
 
-def extract_kwargs(callable: Callable, params: dict, kwargs: dict) -> None:
+def pop_kwargs(callable: Callable, kwargs: dict) -> None:
     args_spec = inspect.getfullargspec(callable)
-    for arg in args_spec.args:
-        if arg in kwargs:
-            params[arg] = kwargs.pop(arg)
+    return {arg: kwargs.pop(arg) for arg in args_spec.args if arg in kwargs}
+
+
+def import_function(import_path: str) -> Callable:
+    module, function = import_path.rsplit(".", 1)
+    module = __import__(module, fromlist=[function])
+    return getattr(module, function)
+
+
+def validate_xarray(
+    ds: "xr.Dataset" | "xr.DataArray", var: str | None = None, warn: bool = True
+):
+    import xarray as xr
+
+    if var:
+        ds = ds[var]
+    elif isinstance(ds, xr.Dataset):
+        var = list(ds.data_vars)[0]
+        if warn:
+            warn_default_used("var", var, suffix="from the dataset")
+        ds = ds[var]
+
+    if ds.ndim > 3:
+        raise ValueError(f"Can only handle 3D arrays; {ds.ndim}D array found")
+    return ds
