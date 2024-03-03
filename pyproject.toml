@@ -26,7 +26,7 @@ dependencies = [
     "pytest-cov",
     "mkdocs-material",
     "mkdocstrings[python]",
-    
+
 ]
 
 [tool.hatch.envs.default.scripts]

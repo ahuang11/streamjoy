@@ -2,12 +2,12 @@ import logging
 
 from .core import stream
 from .models import GifStream, Mp4Stream
-from .settings import config, file_handlers, obj_handlers
 from .renderers import (
     default_holoviews_renderer,
     default_pandas_renderer,
     default_xarray_renderer,
 )
+from .settings import config, file_handlers, obj_handlers
 
 __version__ = "0.0.0"
 

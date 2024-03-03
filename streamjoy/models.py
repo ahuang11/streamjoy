@@ -3,9 +3,9 @@ from __future__ import annotations
 import gc
 import re
 from abc import abstractmethod
-from textwrap import indent
 from itertools import zip_longest
 from pathlib import Path
+from textwrap import indent
 from typing import Any, Callable
 
 import dask.delayed
@@ -17,17 +17,16 @@ from imageio.core.v3_plugin_api import PluginV3
 from PIL import Image, ImageDraw, ImageFont
 
 from . import _utils
-from .settings import config, obj_handlers, file_handlers
-from .wrappers import wrap_holoviews, wrap_matplotlib
 from .renderers import (
+    default_holoviews_renderer,
     default_pandas_renderer,
     default_xarray_renderer,
-    default_holoviews_renderer,
 )
+from .settings import config, file_handlers, obj_handlers
+from .wrappers import wrap_holoviews, wrap_matplotlib
 
 
 class ImageText(param.Parameterized):
-
     text = param.String(
         doc="The text to render.",
     )
@@ -91,7 +90,6 @@ class ImageText(param.Parameterized):
 
 
 class _MediaStream(param.Parameterized):
-
     renderer = param.Callable(
         doc="The renderer to use for the resources.",
     )
@@ -465,6 +463,7 @@ class _MediaStream(param.Parameterized):
         **kwargs,
     ) -> _MediaStream:
         import re
+
         import requests
         from bs4 import BeautifulSoup
 
@@ -511,7 +510,9 @@ class _MediaStream(param.Parameterized):
             resources = file_handler(paths, **(file_handler_kwargs or {}))
             obj_handler = self._select_obj_handler(resources)
             obj_handler_kwargs = _utils.pop_kwargs(obj_handler, kwargs)
-            return obj_handler(resources, renderer, renderer_kwargs, **obj_handler_kwargs)
+            return obj_handler(
+                resources, renderer, renderer_kwargs, **obj_handler_kwargs
+            )
 
         # or simply return image paths
         return paths, renderer, renderer_kwargs
@@ -787,7 +788,6 @@ class GifStream(_MediaStream):
 
 
 class AnyStream(_MediaStream):
-
     def _display_in_notebook(self, obj: Any, is_media: bool = True) -> None:
         return
 

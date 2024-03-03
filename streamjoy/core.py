@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable
-from functools import partial
 
 from . import _utils
 from .models import AnyStream, GifStream, Mp4Stream

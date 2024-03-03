@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from functools import wraps
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
+from typing import Callable
 
 from dask.distributed import Client
 
@@ -62,7 +61,7 @@ def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = Non
             if backend == "bokeh":
                 from bokeh.io.export import export_png
                 from selenium.webdriver.chrome.options import Options
-                from selenium.webdriver.chrome.webdriver import WebDriver, Service
+                from selenium.webdriver.chrome.webdriver import Service, WebDriver
                 from webdriver_manager.chrome import ChromeDriverManager
 
                 options = Options()
