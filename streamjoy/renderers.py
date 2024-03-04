@@ -6,21 +6,16 @@ from . import _utils
 
 def default_pandas_renderer(df_sub: "pd.DataFrame", *args, **kwargs):
     import matplotlib.pyplot as plt
+    df_sub = df_sub.reset_index()
 
     fig, ax = plt.subplots()
     title = kwargs.get("title")
-    if title and "{" in title and "}" in title:
-        # find the first item in {}
-        index = re.search(r"\{(.*?)\}", title).group(1)
-        if df_sub.index.name == index:
-            title = df_sub.index[-1]
-        else:
-            title = df_sub[index].iloc[-1]
+    if title:
+        title = title.format(**df_sub.iloc[-1])
     elif title is None:
         title = df_sub.index[-1]
     kwargs["title"] = title
 
-    df_sub = df_sub.reset_index()
     groupby = kwargs.pop("groupby", None)
     if groupby:
         for group, df_group in df_sub.groupby(groupby):

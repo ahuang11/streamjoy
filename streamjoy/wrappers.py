@@ -54,7 +54,7 @@ def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = Non
             hv_obj = renderer(*args, **kwargs)
 
             uri = _utils.resolve_uri(
-                file_name=f"{id(hv_obj)}.png",
+                file_name=f"{hash(hv_obj)}.png",
                 scratch_dir=scratch_dir,
                 in_memory=in_memory,
             )

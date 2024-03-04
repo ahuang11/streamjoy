@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from functools import partial
 from pathlib import Path
 from typing import Any, Callable
 
-from . import _utils
-from .models import AnyStream, GifStream, Mp4Stream
+from .models import AnyStream, GifStream, Mp4Stream, ConnectedStreams
 
 
 def stream(
@@ -13,7 +11,6 @@ def stream(
     output_path: str | Path | None = None,
     renderer: Callable | None = None,
     renderer_kwargs: dict | None = None,
-    iterables: list[Any] | None = None,
     **kwargs,
 ) -> AnyStream | GifStream | Mp4Stream | Path:
     """
@@ -24,13 +21,10 @@ def stream(
         output_path: The path to write the stream to. If None, the stream is returned.
         renderer: The renderer to use. If None, the default renderer is used.
         renderer_kwargs: Additional keyword arguments to pass to the renderer.
-        iterables: A list of iterables to map alongside the resources; useful for
-            rendering resources with additional metadata. Each item in the
-            list should be the same length as the resources.
         **kwargs: Additional keyword arguments to pass to the stream constructor.
 
     Returns:
-        The stream if path is None, otherwise None.
+        The stream if output_path is None, otherwise the output_path.
     """
     stream_cls = AnyStream
     if output_path:
@@ -42,19 +36,35 @@ def stream(
         else:
             raise ValueError(f"Unsupported file extension {output_path.suffix}")
 
-    params = {
-        key: kwargs.pop(key) for key in stream_cls.param.values() if key in kwargs
-    }
+    resources, renderer, renderer_kwargs = stream_cls._expand_from_any(
+        resources, renderer, renderer_kwargs or {}, **kwargs
+    )
     stream = stream_cls(
-        renderer=renderer, renderer_kwargs=renderer_kwargs or {}, **params
+        resources=resources,
+        renderer=renderer,
+        renderer_kwargs=renderer_kwargs,
+        **kwargs,
     )
 
     if output_path:
-        return stream.write(
-            resources,
-            output_path=output_path,
-            iterables=iterables,
-            **kwargs,
-        )
-    stream.write = partial(stream.write, resources, **kwargs)
+        return stream.write(output_path=output_path)
+    return stream
+
+
+def connect(
+    streams: list[AnyStream | GifStream | Mp4Stream],
+    output_path: str | Path | None = None,
+) -> ConnectedStreams | Path:
+    """
+    Connect multiple streams into a single stream.
+
+    Args:
+        streams: The streams to connect.
+
+    Returns:
+        The connected streams if output_path is None, otherwise the output_path.
+    """
+    stream = ConnectedStreams(streams=streams)
+    if output_path:
+        return stream.write(output_path=output_path)
     return stream

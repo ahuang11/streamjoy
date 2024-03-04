@@ -1,6 +1,6 @@
 config = {
     # animation
-    "fps": 10,
+    "fps": 5,
     "max_frames": 50,
     # dask
     "batch_size": 10,
@@ -21,7 +21,7 @@ config = {
     # imageio
     "codec": "libx264",
     "loop": 0,
-    "ending_pause": 4,
+    "ending_pause": 3,
     # image text
     "image_text_font": "Avenir.ttc",
     "image_text_size": 20,

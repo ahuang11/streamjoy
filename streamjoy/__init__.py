@@ -1,6 +1,7 @@
 import logging
 
-from .core import stream
+from ._utils import update_logger
+from .core import stream, connect
 from .models import GifStream, Mp4Stream
 from .renderers import (
     default_holoviews_renderer,
@@ -19,6 +20,7 @@ __all__ = [
     "file_handlers",
     "obj_handlers",
     "stream",
+    "connect",
     "GifStream",
     "Mp4Stream",
 ]
@@ -29,3 +31,5 @@ logging.basicConfig(
     format=config["logging_format"],
     datefmt=config["logging_datefmt"],
 )
+
+update_logger()

@@ -5,6 +5,7 @@ import logging
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable
+from itertools import islice
 
 from dask.distributed import Client, Future, get_client
 
@@ -146,6 +147,12 @@ def get_max_frames(total_frames: int, max_frames: int) -> int:
     return max_frames
 
 
+def get_first(iterable):
+    if isinstance(iterable, (list, tuple)):
+        return iterable[0]
+    return next(islice(iterable, 0, 1), None)
+
+
 def get_result(future: Future) -> Any:
     if isinstance(future, Future):
         return future.result()
@@ -207,3 +214,10 @@ def validate_xarray(
     if ds.ndim > 3:
         raise ValueError(f"Can only handle 3D arrays; {ds.ndim}D array found")
     return ds
+
+
+def map_over(client, func, resources, batch_size, *args, **kwargs):
+    try:
+        return client.map(func, resources, *args, batch_size=batch_size, **kwargs)
+    except TypeError as exc:
+        return [client.submit(func, resource, *args, **kwargs) for resource in resources]
