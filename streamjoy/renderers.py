@@ -41,8 +41,11 @@ def default_xarray_renderer(da_sel: "xr.DataArray", *args, **kwargs):
 
 
 def default_holoviews_renderer(hv_obj: "hv.Element", *args, **kwargs):
-    clims = kwargs.pop("clims", {})
+    import holoviews as hv
+    backend = kwargs["backend"]
+    hv.extension(backend)
 
+    clims = kwargs.pop("clims", {})
     for hv_el in hv_obj.traverse(full_breadth=False):
         try:
             vdim = hv_el.vdims[0].name
@@ -51,5 +54,8 @@ def default_holoviews_renderer(hv_obj: "hv.Element", *args, **kwargs):
         if vdim in clims:
             hv_el.opts(clim=clims[vdim])
 
-    hv_obj.opts(toolbar=None, **kwargs)
+    if backend == "bokeh":
+        kwargs["toolbar"] = None
+    hv_obj.opts(**kwargs)
+
     return hv_obj

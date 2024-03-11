@@ -4,12 +4,15 @@ import inspect
 import logging
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 from itertools import islice
 
+import imageio.v3 as iio
+import numpy as np
 from dask.distributed import Client, Future, get_client
 
 from .settings import config
+from .models import Paused
 
 
 def update_logger(
@@ -113,8 +116,8 @@ def download_file(
     in_memory: bool = False,
 ) -> str:
     import requests
-
-    file_name = Path(url).name
+    url_path = Path(url)
+    file_name = f"{url_path.parent.parent.name}_{url_path.parent.name}_{url_path.name}"
     uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
     if isinstance(uri, Path) and uri.exists():
         return uri
@@ -199,7 +202,10 @@ def import_function(import_path: str) -> Callable:
 
 
 def validate_xarray(
-    ds: "xr.Dataset" | "xr.DataArray", var: str | None = None, warn: bool = True
+    ds: "xr.Dataset" | "xr.DataArray",
+    dim: str | None = None,
+    var: str | None = None,
+    warn: bool = True,
 ):
     import xarray as xr
 
@@ -211,13 +217,59 @@ def validate_xarray(
             warn_default_used("var", var, suffix="from the dataset")
         ds = ds[var]
 
+    squeeze_dims = [d for d in ds.dims if d != dim and ds.sizes[d] == 1]
+    ds = ds.squeeze(squeeze_dims)
     if ds.ndim > 3:
         raise ValueError(f"Can only handle 3D arrays; {ds.ndim}D array found")
     return ds
 
 
+def validate_iterables(
+    resources: list[Any],
+    iterables: list[list[Any]],
+):
+    if not iterables:
+        return
+
+    num_iterables = len(iterables)
+    num_resources = len(resources)
+
+    if num_iterables == num_resources:
+        logging.warning(
+            "The length of the iterables matches the length of the resources. "
+            "This is likely not what you want; the iterables should be a list of lists, "
+            "where each inner list corresponds to the arguments for each frame."
+        )
+
+    if not isinstance(iterables[0], Iterable) or isinstance(iterables[0], str):
+        raise TypeError(
+            "Iterables should be like a list of lists, where each inner list corresponds "
+            "to the arguments for each frame."
+        )
+
+
 def map_over(client, func, resources, batch_size, *args, **kwargs):
     try:
         return client.map(func, resources, *args, batch_size=batch_size, **kwargs)
-    except TypeError as exc:
-        return [client.submit(func, resource, *args, **kwargs) for resource in resources]
+    except TypeError:
+        return [
+            client.submit(func, resource, *args, **kwargs) for resource in resources
+        ]
+
+
+def repeat_frame(
+    write: Callable, image: np.ndarray, seconds: int, fps: int, **write_kwargs
+) -> np.ndarray:
+    repeat = int(seconds * fps)
+    for _ in range(repeat):
+        write(image, **write_kwargs)
+    return image
+
+
+def imread_with_pause(
+    uri: Any | Paused, extension: str | None = None, plugin: str | None = None
+) -> np.ndarray | Paused:
+    imread_kwargs = dict(extension=extension, plugin=plugin)
+    if isinstance(uri, Paused):
+        return Paused(iio.imread(uri.output, **imread_kwargs), uri.seconds).squeeze()
+    return iio.imread(uri, **imread_kwargs).squeeze()

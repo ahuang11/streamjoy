@@ -3,11 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable
 
-from .models import AnyStream, GifStream, Mp4Stream, ConnectedStreams
+from .streams import AnyStream, GifStream, Mp4Stream, ConnectedStreams
+from . import _utils
 
 
 def stream(
     resources: Any,
+    *iterables,
     output_path: str | Path | None = None,
     renderer: Callable | None = None,
     renderer_kwargs: dict | None = None,
@@ -36,11 +38,13 @@ def stream(
         else:
             raise ValueError(f"Unsupported file extension {output_path.suffix}")
 
-    resources, renderer, renderer_kwargs = stream_cls._expand_from_any(
+    resources, renderer, renderer_kwargs, kwargs = stream_cls._expand_from_any(
         resources, renderer, renderer_kwargs or {}, **kwargs
     )
+
     stream = stream_cls(
         resources=resources,
+        iterables=iterables,
         renderer=renderer,
         renderer_kwargs=renderer_kwargs,
         **kwargs,

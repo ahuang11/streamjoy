@@ -3,12 +3,10 @@ from __future__ import annotations
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Callable
-
-from dask.distributed import Client
 
 from . import _utils
 from .settings import config
+from .models import Paused
 
 
 def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = None):
@@ -22,7 +20,14 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
 
             plt.rcParams.update({"figure.max_open_warning": config["max_open_warning"]})
 
-            fig = renderer(*args, **kwargs)
+            output = renderer(*args, **kwargs)
+
+            fig = output
+            return_paused = False
+            if isinstance(output, Paused):
+                return_paused = True
+                fig = output.output
+
             if isinstance(fig, plt.Axes):
                 fig = fig.figure
             elif not isinstance(fig, plt.Figure):
@@ -35,7 +40,7 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
             )
             fig.savefig(uri, format="jpg")
             plt.close(fig)
-            return uri
+            return uri if not return_paused else Paused(output=uri, seconds=output.seconds)
 
         return wrapped
 

@@ -1,17 +1,17 @@
 config = {
     # animation
-    "fps": 5,
+    "fps": 10,
     "max_frames": 50,
     # dask
     "batch_size": 10,
     "processes": True,
     "threads_per_worker": None,
     # intro
-    "intro_pause": 3,
+    "intro_pause": 2,
     "intro_watermark": "made with streamjoy",
     "intro_background": "black",
     # from_url
-    "max_urls": 1,
+    "max_files": 2,
     # matplotlib
     "max_open_warning": 100,
     # output
@@ -21,7 +21,7 @@ config = {
     # imageio
     "codec": "libx264",
     "loop": 0,
-    "ending_pause": 3,
+    "ending_pause": 2,
     # image text
     "image_text_font": "Avenir.ttc",
     "image_text_size": 20,
