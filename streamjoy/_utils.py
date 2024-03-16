@@ -57,7 +57,7 @@ def warn_default_used(
     if suffix:
         message += f" {suffix}"
     message += f". Suppress this by passing {key!r}."
-    logging.warn(message)
+    logging.warning(message)
 
 
 def get_config_default(
@@ -224,7 +224,7 @@ def validate_xarray(
     return ds
 
 
-def validate_iterables(
+def validate_renderer_iterables(
     resources: list[Any],
     iterables: list[list[Any]],
 ):

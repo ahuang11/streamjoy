@@ -6,7 +6,7 @@
 
 ## 🔥 Animate, fast and easy
 
-Streamjoy merges images into animations--meticulously designed and tested to ensure maximum enjoyment and minimal effort.
+Streamjoy merges images into animations--meticulously designed with sensible defaults and tested to ensure maximum enjoyment and minimal effort.
 
 It cuts down the boilerplate and time to work on animations, and it's simple to start with just a few lines of code.
 
@@ -32,7 +32,7 @@ Stream from a list of images.
 from streamjoy import stream
 
 URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"  # local files work too!
-stream([URL_FMT.format(i=i) for i in range(1, 11)], output_path="goes.gif")  # .gif and .mp4 supported
+stream([URL_FMT.format(i=i) for i in range(1, 11)], uri="goes.gif")  # .gif and .mp4 supported
 ```
 
 Specify a few more keywords to:
@@ -54,7 +54,7 @@ himawari_stream = stream(
 himawari_stream
 ```
 
-Preview the inputs by excluding `output_path`.
+Preview the inputs by excluding `uri`.
 
 ```yaml
 <AnyStream>
@@ -85,7 +85,7 @@ Resources: (10 frames to stream)
 ---
 ```
 
-Then, simply add back `output_path` or call the `write` method to save the animation!
+Then, simply add back `uri` or call the `write` method to save the animation!
 
 ```python
 himawari_stream.write("goes_custom.gif")
@@ -110,7 +110,7 @@ infrared_stream = stream(
     intro_title="Himawari Infrared",
     intro_subtitle="10 Hours Loop",
 )
-connect([visible_stream, infrared_stream], output_path="goes_connected.gif")
+connect([visible_stream, infrared_stream], uri="goes_connected.gif")
 ```
 
 You can also render images directly from datasets, either through a custom renderer or a built-in one, and they'll also run in parallel!
@@ -139,7 +139,7 @@ stream(
     "https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/201008/",
     np.linspace(-140, -150, 30),  # iterables; central longitude per frame (30 frames)
     renderer=plot,  # base stream kwargs
-    output_path="oisst.mp4",
+    uri="oisst.mp4",
     pattern="oisst-avhrr-v02r01.*.nc",  # Mp4Stream.from_url kwargs
     max_files=30,
     cmap="RdBu_r", # plot kwargs to be forwarded

@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from .streams import AnyStream, GifStream, Mp4Stream, ConnectedStreams
-from . import _utils
 
 
 def stream(
     resources: Any,
-    *iterables,
-    output_path: str | Path | None = None,
+    uri: str | Path | BytesIO | None = None,
     renderer: Callable | None = None,
+    renderer_iterables: list | None = None,
     renderer_kwargs: dict | None = None,
+    extension: Literal[".mp4", ".gif"] | None = None,
     **kwargs,
 ) -> AnyStream | GifStream | Mp4Stream | Path:
     """
@@ -20,44 +21,50 @@ def stream(
 
     Args:
         resources: The resources to create a stream from.
-        output_path: The path to write the stream to. If None, the stream is returned.
+        uri: The destination to write the stream to. If None, the stream is returned.
         renderer: The renderer to use. If None, the default renderer is used.
+        renderer_iterables: Additional positional arguments to map over the renderer.
         renderer_kwargs: Additional keyword arguments to pass to the renderer.
+        extension: The extension to use; useful if uri is a file-like object.
         **kwargs: Additional keyword arguments to pass to the stream constructor.
 
     Returns:
-        The stream if output_path is None, otherwise the output_path.
+        The stream if uri is None, otherwise the uri.
     """
     stream_cls = AnyStream
-    if output_path:
-        output_path = Path(output_path)
-        if output_path.suffix == ".mp4":
+    if uri:
+        if isinstance(uri, str):
+            uri = Path(uri)
+        extension = extension or uri.suffix
+        if extension == ".mp4":
             stream_cls = Mp4Stream
-        elif output_path.suffix == ".gif":
+        elif extension == ".gif":
             stream_cls = GifStream
         else:
-            raise ValueError(f"Unsupported file extension {output_path.suffix}")
+            raise ValueError(f"Unsupported file extension {extension}")
 
-    resources, renderer, renderer_kwargs, kwargs = stream_cls._expand_from_any(
-        resources, renderer, renderer_kwargs or {}, **kwargs
+    resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
+        stream_cls._expand_from_any(
+            resources, renderer, renderer_iterables, renderer_kwargs or {}, **kwargs
+        )
     )
 
     stream = stream_cls(
         resources=resources,
-        iterables=iterables,
         renderer=renderer,
+        renderer_iterables=renderer_iterables,
         renderer_kwargs=renderer_kwargs,
         **kwargs,
     )
 
-    if output_path:
-        return stream.write(output_path=output_path)
+    if uri:
+        return stream.write(uri=uri, extension=extension)
     return stream
 
 
 def connect(
     streams: list[AnyStream | GifStream | Mp4Stream],
-    output_path: str | Path | None = None,
+    uri: str | Path | BytesIO | None = None,
 ) -> ConnectedStreams | Path:
     """
     Connect multiple streams into a single stream.
@@ -66,9 +73,9 @@ def connect(
         streams: The streams to connect.
 
     Returns:
-        The connected streams if output_path is None, otherwise the output_path.
+        The connected streams if uri is None, otherwise the uri.
     """
     stream = ConnectedStreams(streams=streams)
-    if output_path:
-        return stream.write(output_path=output_path)
+    if uri:
+        return stream.write(uri=uri)
     return stream

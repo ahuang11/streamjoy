@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 try:
     import xarray as xr
 except Exception as exc:

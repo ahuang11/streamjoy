@@ -26,7 +26,12 @@ dependencies = [
     "pytest-cov",
     "mkdocs-material",
     "mkdocstrings[python]",
-
+    "xarray",
+    "pandas",
+    "zarr",
+    "netcdf4",
+    "matplotlib",
+    "pyarrow",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -64,6 +69,7 @@ dependencies = [
     "bokeh",
     "dask[distributed]",
     "imageio[pyav]>=2.34.0",
+    "pygifsicle==1.0.5",
 ]
 
 [project.urls]

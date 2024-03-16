@@ -1,6 +1,6 @@
 config = {
     # animation
-    "fps": 10,
+    "fps": 8,
     "max_frames": 50,
     # dask
     "batch_size": 10,
@@ -17,11 +17,13 @@ config = {
     # output
     "in_memory": False,
     "scratch_dir": "streamjoy_scratch",
-    "output_path": "streamjoy.mp4",
+    "uri": None,
     # imageio
     "codec": "libx264",
     "loop": 0,
     "ending_pause": 2,
+    # gif
+    "optimize": False,
     # image text
     "image_text_font": "Avenir.ttc",
     "image_text_size": 20,

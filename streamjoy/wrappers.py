@@ -40,7 +40,9 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
             )
             fig.savefig(uri, format="jpg")
             plt.close(fig)
-            return uri if not return_paused else Paused(output=uri, seconds=output.seconds)
+            return (
+                uri if not return_paused else Paused(output=uri, seconds=output.seconds)
+            )
 
         return wrapped
 
@@ -56,7 +58,13 @@ def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = Non
             backend = kwargs.get("backend", hv.Store.current_backend)
             hv.extension(backend)
 
-            hv_obj = renderer(*args, **kwargs)
+            output = renderer(*args, **kwargs)
+
+            hv_obj = output
+            return_paused = False
+            if isinstance(output, Paused):
+                return_paused = True
+                hv_obj = output.output
 
             uri = _utils.resolve_uri(
                 file_name=f"{hash(hv_obj)}.png",
@@ -83,7 +91,9 @@ def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = Non
             else:
                 hv.save(hv_obj, uri, fmt="png")
 
-            return uri
+            return (
+                uri if not return_paused else Paused(output=uri, seconds=output.seconds)
+            )
 
         return wrapped
 

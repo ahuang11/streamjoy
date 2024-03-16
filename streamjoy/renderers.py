@@ -1,11 +1,11 @@
-import re
-from typing import Any
+from __future__ import annotations
 
 from . import _utils
 
 
 def default_pandas_renderer(df_sub: "pd.DataFrame", *args, **kwargs):
     import matplotlib.pyplot as plt
+
     df_sub = df_sub.reset_index()
 
     fig, ax = plt.subplots()
@@ -13,7 +13,7 @@ def default_pandas_renderer(df_sub: "pd.DataFrame", *args, **kwargs):
     if title:
         title = title.format(**df_sub.iloc[-1])
     elif title is None:
-        title = df_sub.index[-1]
+        title = df_sub[kwargs["x"]].iloc[-1]
     kwargs["title"] = title
 
     groupby = kwargs.pop("groupby", None)
@@ -42,7 +42,8 @@ def default_xarray_renderer(da_sel: "xr.DataArray", *args, **kwargs):
 
 def default_holoviews_renderer(hv_obj: "hv.Element", *args, **kwargs):
     import holoviews as hv
-    backend = kwargs["backend"]
+
+    backend = kwargs.get("backend", "bokeh")
     hv.extension(backend)
 
     clims = kwargs.pop("clims", {})

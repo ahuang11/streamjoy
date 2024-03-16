@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import param
 from PIL import ImageDraw, ImageFont
 
@@ -53,7 +55,7 @@ class ImageText(param.Parameterized):
     def __init__(self, text: str, **params) -> None:
         params["text"] = text
         params = _utils.populate_config_defaults(
-            params, self.param.params(), config_prefix="image_text"
+            params, self.param.values(), config_prefix="image_text"
         )
         super().__init__(**params)
 
