@@ -6,11 +6,11 @@
 
 ## 🔥 Enjoy animating!
 
-Streamjoy merges images into animations--meticulously designed with sensible defaults and tested to ensure maximum enjoyment and minimal effort.
+Streamjoy turns your images into animations using sensible defaults for fun, hassle-free creation.
 
 It cuts down the boilerplate and time to work on animations, and it's simple to start with just a few lines of code.
 
-Install it with pip.
+Install it with just pip!
 
 ```python
 pip install streamjoy
