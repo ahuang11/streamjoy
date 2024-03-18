@@ -1,8 +1,8 @@
-site_name: streamwee
-site_description: Animate, fast and easy
+site_name: streamjoy
+site_description: Enjoy animating!
 
-repo_url: https://github.com/ahuang11/streamwee
-repo_name: ahuang11/streamwee
+repo_url: https://github.com/ahuang11/streamjoy
+repo_name: ahuang11/streamjoy
 
 theme:
     name: material
@@ -56,9 +56,9 @@ plugins:
 
 watch:
     - docs
-    - streamwee
+    - streamjoy
 
 nav:
     - About: index.md
     - Reference:
-        - streamwee: reference/streamwee.md
+        - streamjoy: reference/streamjoy.md

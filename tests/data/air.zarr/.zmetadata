@@ -1,0 +1,148 @@
+{
+    "metadata": {
+        ".zattrs": {
+            "Conventions": "COARDS",
+            "description": "Data is from NMC initialized reanalysis\n(4x/day).  These are the 0.9950 sigma level values.",
+            "platform": "Model",
+            "references": "http://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis.html",
+            "title": "4x daily NMC reanalysis (1948)"
+        },
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "air/.zarray": {
+            "chunks": [
+                20,
+                25,
+                53
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i2",
+            "fill_value": null,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20,
+                25,
+                53
+            ],
+            "zarr_format": 2
+        },
+        "air/.zattrs": {
+            "GRIB_id": 11,
+            "GRIB_name": "TMP",
+            "_ARRAY_DIMENSIONS": [
+                "time",
+                "lat",
+                "lon"
+            ],
+            "actual_range": [
+                185.16000366210938,
+                322.1000061035156
+            ],
+            "dataset": "NMC Reanalysis",
+            "level_desc": "Surface",
+            "long_name": "4xDaily Air temperature at sigma level 995",
+            "parent_stat": "Other",
+            "precision": 2,
+            "scale_factor": 0.01,
+            "statistic": "Individual Obs",
+            "units": "degK",
+            "var_desc": "Air temperature"
+        },
+        "lat/.zarray": {
+            "chunks": [
+                25
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                25
+            ],
+            "zarr_format": 2
+        },
+        "lat/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lat"
+            ],
+            "axis": "Y",
+            "long_name": "Latitude",
+            "standard_name": "latitude",
+            "units": "degrees_north"
+        },
+        "lon/.zarray": {
+            "chunks": [
+                53
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                53
+            ],
+            "zarr_format": 2
+        },
+        "lon/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "lon"
+            ],
+            "axis": "X",
+            "long_name": "Longitude",
+            "standard_name": "longitude",
+            "units": "degrees_east"
+        },
+        "time/.zarray": {
+            "chunks": [
+                20
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                20
+            ],
+            "zarr_format": 2
+        },
+        "time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ],
+            "calendar": "standard",
+            "long_name": "Time",
+            "standard_name": "time",
+            "units": "hours since 1800-01-01"
+        }
+    },
+    "zarr_consolidated_format": 1
+}
