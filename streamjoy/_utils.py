@@ -249,10 +249,10 @@ def validate_renderer_iterables(
     resources: list[Any],
     iterables: list[list[Any]],
 ):
-    if not iterables:
+    num_iterables = len(iterables)
+    if num_iterables == 0:
         return
 
-    num_iterables = len(iterables)
     num_resources = len(resources)
 
     if num_iterables == num_resources:
@@ -265,7 +265,8 @@ def validate_renderer_iterables(
     if not isinstance(iterables[0], Iterable) or isinstance(iterables[0], str):
         raise TypeError(
             "Iterables should be like a list of lists, where each inner list corresponds "
-            "to the arguments for each frame."
+            "to the arguments for each frame; e.g. `[[arg1_for_frame1, arg1_for_frame2], "
+            "[arg2_for_frame_1, arg2_for_frame2]]`"
         )
 
 

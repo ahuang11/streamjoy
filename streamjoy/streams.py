@@ -1142,8 +1142,8 @@ class GifStream(_MediaStream):
                 data = base64.b64encode(obj.getvalue()).decode("ascii")
                 obj = HTML(
                     data=f"""
-                    <img src="data:image/gif;base64,{data}">
-                """
+                        <img src="data:image/gif;base64,{data}">
+                    """
                 )
             else:
                 obj = Image(obj)
@@ -1232,7 +1232,7 @@ class GifStream(_MediaStream):
         resources: Any | None = None,
         **kwargs,
     ) -> Path | BytesIO:
-        optimize = kwargs.pop("optimize", None)
+        optimize = kwargs.pop("optimize", self.optimize)
         uri = self._validate_uri(uri)
         uri = super().write(uri=uri, resources=resources, **kwargs)
         self._display_in_notebook(uri, display=self.display)
