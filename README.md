@@ -39,7 +39,7 @@ resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 stream(resources, uri="goes.gif")  # .gif and .mp4 supported
 ```
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/a78b8b5e-bd28-4df2-aecb-6211cf3bb956" width="500" height="500">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/190ab753-00cf-4a0d-b8be-8a0b9b9e4443" width="500" height="500">
 
 ### 💅 Polish up
 
@@ -47,6 +47,7 @@ Specify a few more keywords to:
 
 1. add an intro title and subtitle
 2. adjust the pauses
+3. optimize the GIF thru pygifsicle
 
 ```python
 from streamjoy import stream
@@ -56,15 +57,15 @@ resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 himawari_stream = stream(
     resources,
     uri="goes_custom.gif",
-    [URL_FMT.format(i=i) for i in range(1, 11)],
     intro_title="Himawari Visible",
     intro_subtitle="10 Hours Loop",
     intro_pause=1,
-    ending_pause=1
+    ending_pause=1,
+    optimize=True,
 )
 ```
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/f69eb289-8074-4b49-9d9e-26f2c47c1a51" width="500" height="500">
 
 ### 👀 Preview inputs
 
@@ -130,7 +131,7 @@ infrared_stream = stream(
 connect([visible_stream, infrared_stream], uri="goes_connected.gif")
 ```
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/96e8477d-d70b-4c76-9ed4-55dad1e76393" width="500" height="500">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5f6e0435-f2c2-4c3e-bcf9-4c84d4d060e9" width="500" height="500">
 
 ### 📷 Render datasets
 
@@ -163,9 +164,8 @@ url = (
 pattern = "oisst-avhrr-v02r01.*.nc"
 stream(
     url,
-    renderer=plot,  # base stream kwargs
-    uri="oisst.mp4",
-    pattern=pattern,  # Mp4Stream.from_url kwargs
+    uri="oisst.gif",
+    pattern=pattern,  # GifStream.from_url kwargs
     max_files=30,
     renderer=plot,  # renderer related kwargs
     renderer_iterables=[np.linspace(-140, -150, 30)],  # iterables; central longitude per frame (30 frames)
@@ -176,7 +176,7 @@ stream(
 )
 ```
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/59b9f620-926c-4ac3-819c-5859d8e44e12" width="500" height="500">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/3db0ae48-d7d5-4e00-a4a4-50bbe4bb3d19" width="500" height="500">
 
 Read the full docs [here](https://ahuang11.github.io/streamjoy/).
 
