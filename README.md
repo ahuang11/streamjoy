@@ -6,23 +6,24 @@
 
 ## 🔥 Enjoy animating!
 
-Streamjoy merges images into animations--meticulously designed with sensible defaults and tested to ensure maximum enjoyment and minimal effort.
+Streamjoy turns your images into animations using sensible defaults for fun, hassle-free creation.
 
 It cuts down the boilerplate and time to work on animations, and it's simple to start with just a few lines of code.
 
-Install it with pip.
+Install it with just pip!
+
 ```python
 pip install streamjoy
 ```
 
 ## 🛠️ Built-in features
 
-🌐 Animate from URLs, files, and datasets
-🎨 Render images with default or custom renderers
-🎬 Provide context with a short intro splash
-⏸ Add pauses at the beginning, end, or between frames
-⚡ Execute read, render, write in parallel
-🔗 Connect multiple animations together
+- 🌐 Animate from URLs, files, and datasets
+- 🎨 Render images with default or custom renderers
+- 🎬 Provide context with a short intro splash
+- ⏸ Add pauses at the beginning, end, or between frames
+- ⚡ Execute read, render, and write in parallel
+- 🔗 Connect multiple animations together
 
 ## 🚀 Quick start
 
@@ -36,6 +37,8 @@ resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 stream(resources, uri="goes.gif")  # .gif and .mp4 supported
 ```
 
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/a78b8b5e-bd28-4df2-aecb-6211cf3bb956" width="500" height="500">
+
 Specify a few more keywords to:
 
 1. add an intro title and subtitle
@@ -48,16 +51,20 @@ URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
 resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 himawari_stream = stream(
     resources,
+    uri="goes_custom.gif",
+    [URL_FMT.format(i=i) for i in range(1, 11)],
     intro_title="Himawari Visible",
     intro_subtitle="10 Hours Loop",
     intro_pause=1,
     ending_pause=1
 )
-himawari_stream
 ```
 
-Preview the inputs by excluding `uri`.
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
 
+If you'd like to preview the `repr` before writing, drop `uri`.
+
+Output:
 ```yaml
 <AnyStream>
 ---
@@ -87,10 +94,10 @@ Resources: (10 frames to stream)
 ---
 ```
 
-Then, simply add back `uri` or call the `write` method to save the animation!
+Then, when ready, call the `write` method to save the animation!
 
 ```python
-himawari_stream.write("goes_custom.gif")
+himawari_stream.write()
 ```
 
 Connect multiple streams together to provide further context.
@@ -114,6 +121,8 @@ infrared_stream = stream(
 )
 connect([visible_stream, infrared_stream], uri="goes_connected.gif")
 ```
+
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/96e8477d-d70b-4c76-9ed4-55dad1e76393" width="500" height="500">
 
 You can also render images directly from datasets, either through a custom renderer or a built-in one, and they'll also run in parallel!
 
@@ -141,18 +150,23 @@ url = (
   "https://www.ncei.noaa.gov/data/sea-surface-temperature-"
   "optimum-interpolation/v2.1/access/avhrr/201008/"
 )
+pattern = "oisst-avhrr-v02r01.*.nc"
 stream(
     url,
-    np.linspace(-140, -150, 30),  # iterables; central longitude per frame (30 frames)
     renderer=plot,  # base stream kwargs
     uri="oisst.mp4",
-    pattern="oisst-avhrr-v02r01.*.nc",  # Mp4Stream.from_url kwargs
+    pattern=pattern,  # Mp4Stream.from_url kwargs
     max_files=30,
-    cmap="RdBu_r", # plot kwargs to be forwarded
-    vmin=-5,
-    vmax=5,
+    renderer=plot,  # renderer related kwargs
+    renderer_iterables=[np.linspace(-140, -150, 30)],  # iterables; central longitude per frame (30 frames)
+    renderer_kwargs=dict(cmap="RdBu_r", vmin=-5, vmax=5),  # renderer kwargs
+    # cmap="RdBu_r", # renderer_kwargs can also be propagated for convenience
+    # vmin=-5,
+    # vmax=5,
 )
 ```
+
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/59b9f620-926c-4ac3-819c-5859d8e44e12" width="500" height="500">
 
 Read the full docs [here](https://ahuang11.github.io/streamjoy/).
 
