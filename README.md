@@ -26,13 +26,14 @@ pip install streamjoy
 
 ## 🚀 Quick start
 
-Stream from a list of images.
+Stream from a list of images--local files work too!
 
 ```python
 from streamjoy import stream
 
-URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"  # local files work too!
-stream([URL_FMT.format(i=i) for i in range(1, 11)], uri="goes.gif")  # .gif and .mp4 supported
+URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
+resources = [URL_FMT.format(i=i) for i in range(1, 11)]
+stream(resources, uri="goes.gif")  # .gif and .mp4 supported
 ```
 
 Specify a few more keywords to:
@@ -44,8 +45,9 @@ Specify a few more keywords to:
 from streamjoy import stream
 
 URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
+resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 himawari_stream = stream(
-    [URL_FMT.format(i=i) for i in range(1, 11)],
+    resources,
     intro_title="Himawari Visible",
     intro_subtitle="10 Hours Loop",
     intro_pause=1,
@@ -63,7 +65,7 @@ Output:
   max_frames: 50
   fps: 10
   display: True
-  scratch_dir: /Users/airbook/Applications/Developer/python/repos/streamjoy/_NOTEBOOKS/streamjoy_scratch
+  scratch_dir: streamjoy_scratch
   in_memory: False
 ---
 Intro:
@@ -135,8 +137,12 @@ def plot(da, central_longitude, **plot_kwargs):
     plt.colorbar(im, ax=ax, label="°C", shrink=0.8)
     return fig
 
+url = (
+  "https://www.ncei.noaa.gov/data/sea-surface-temperature-"
+  "optimum-interpolation/v2.1/access/avhrr/201008/"
+)
 stream(
-    "https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/201008/",
+    url,
     np.linspace(-140, -150, 30),  # iterables; central longitude per frame (30 frames)
     renderer=plot,  # base stream kwargs
     uri="oisst.mp4",

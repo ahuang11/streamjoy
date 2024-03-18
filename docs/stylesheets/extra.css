@@ -1,0 +1,12 @@
+:root {
+    --md-primary-fg-color:        hsla(50, 88%, 33%, 1);
+    --md-primary-fg-color--light: #708b8f;
+    --md-primary-fg-color--dark:  #708b8fa8;
+    --md-accent-fg-color:         hsla(68, 19%, 50%, 1);
+    --md-accent-fg-color--light:  hsla(68, 19%, 50%, 1);
+    --md-accent-fg-color--dark:   hsla(68, 19%, 50%, 1);
+  }
+
+  [data-md-color-scheme="slate"] {
+    --md-hue: 250; 
+  }
