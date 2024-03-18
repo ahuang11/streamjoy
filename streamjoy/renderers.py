@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, tuple
+from typing import TYPE_CHECKING, Any
 
 from . import _utils
 
@@ -37,7 +37,7 @@ def default_pandas_renderer(
         *args: Additional positional arguments to pass to the renderer.
         **kwargs: Additional keyword arguments to pass to the renderer.
 
-    Returns:
+    Returns
         A matplotlib figure.
     """
     import matplotlib.pyplot as plt
