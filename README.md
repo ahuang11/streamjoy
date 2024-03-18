@@ -1,4 +1,4 @@
-![goes](https://github.com/ahuang11/streamjoy/assets/15331990/9a99672e-eb4b-436b-acfd-7bd133521519)# 🌈 streamjoy 😊
+# 🌈 streamjoy 😊
 
 [![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions) [![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy) [![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)
 
