@@ -1,7 +1,7 @@
 
 streamjoy supports a variety of input types!
 
-### List
+### 📋 List
 
 ```python
 from streamjoy import stream
@@ -11,7 +11,7 @@ URL_FMT = "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/images/2024/0
 stream([URL_FMT.format(day=day) for day in range(1, 31)], uri="2024_jan_sea_ice.gif")
 ```
 
-### Directory
+### 📁 Directory
 
 ```python
 from streamjoy import stream
@@ -21,7 +21,7 @@ URL_DIR = "https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis/Dailies/surfa
 stream(URL_DIR, uri="air_temperature.mp4", pattern="air.sig995.194*.nc")
 ```
 
-### Pandas DataFrame
+### 🐼 Pandas DataFrame
 
 ```python
 from streamjoy import stream
@@ -34,7 +34,7 @@ df = df.query("Country in ['United States', 'China', 'South Africa']")
 stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 ```
 
-### XArray Dataset
+### 🗄️ XArray Dataset
 
 ```python
 from streamjoy import stream
@@ -44,7 +44,7 @@ ds = xr.tutorial.open_dataset("air_temperature").isel(time=slice(0, 100))
 stream(ds, uri="air_temperature.mp4", cmap="RdBu_r")
 ```
 
-### HoloViews HoloMap or DynamicMap
+### 📊 HoloViews HoloMap or DynamicMap
 
 ```python
 import xarray as xr
