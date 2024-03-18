@@ -49,20 +49,24 @@ plugins:
     - mkdocstrings:
         handlers:
             python:
-                import:
-                    - https://docs.python.org/3.9/objects.inv
                 options:
                     docstring_style: google
+                    find_stubs_package: true
 
 watch:
     - docs
     - streamjoy
 
 nav:
-    - About: index.md
+    - Read Me!: index.md
+    - Supported Formats: supported_formats.md
     - Reference:
-        - streamjoy: reference/streamjoy.md
+        - Core: reference/core.md
+        - Models: reference/models.md
+        - Streams: reference/streams.md
+        - Renderers: reference/renderers.md
+        - Wrappers: reference/wrappers.md
+        - Settings: reference/settings.md
 
 extra_css:
   - stylesheets/extra.css
-

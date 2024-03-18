@@ -47,7 +47,14 @@ if TYPE_CHECKING:
         hv = None
 
 
-class _MediaStream(param.Parameterized):
+class MediaStream(param.Parameterized):
+    """
+    An abstract class for creating media streams from various resources.
+    Do not use this class directly; use either GifStream or Mp4Stream.
+
+    Expand Source code to see all the parameters and descriptions.
+    """
+
     resources = param.List(
         default=None,
         doc="The resources to render.",
@@ -179,7 +186,7 @@ class _MediaStream(param.Parameterized):
         super().__init__(**params)
 
     @classmethod
-    def _select_obj_handler(cls, resources: Any) -> _MediaStream:
+    def _select_obj_handler(cls, resources: Any) -> MediaStream:
         if isinstance(resources, str) and "://" in resources:
             return cls._expand_from_url
         if isinstance(resources, (Path, str)):
@@ -395,7 +402,7 @@ class _MediaStream(param.Parameterized):
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         import re
 
         import requests
@@ -472,7 +479,7 @@ class _MediaStream(param.Parameterized):
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         if isinstance(resources, str):
             resources = [resources]
 
@@ -573,7 +580,7 @@ class _MediaStream(param.Parameterized):
         dim: str | None = None,
         var: str | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_xarray(
                 ds,
@@ -601,7 +608,7 @@ class _MediaStream(param.Parameterized):
         renderer_kwargs: dict | None = None,
         groupby: str | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_pandas(
                 df, renderer, renderer_kwargs, groupby=groupby, **kwargs
@@ -623,7 +630,7 @@ class _MediaStream(param.Parameterized):
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_holoviews(hv_obj, renderer, renderer_kwargs, **kwargs)
         )
@@ -648,7 +655,7 @@ class _MediaStream(param.Parameterized):
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_url(
                 base_url,
@@ -684,7 +691,7 @@ class _MediaStream(param.Parameterized):
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
-    ) -> _MediaStream:
+    ) -> MediaStream:
         paths = Path(base_dir).glob(pattern)
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_paths(
@@ -867,15 +874,28 @@ class _MediaStream(param.Parameterized):
         This method is responsible for prepending an intro frame to the output buffer.
         """
 
-    def copy(self) -> _MediaStream:
+    def copy(self) -> MediaStream:
+        """
+        Return a copy of the MediaStream.
+        """
         return self.__class__(**self.param.values())
 
     def write(
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Path | BytesIO:
+        """
+        Write the stream to a file or buffer.
+
+        Args:
+            uri (str, Path, BytesIO, optional): The file path or buffer to write to.
+            resources (Any, optional): The resources to write.
+
+        Returns:
+            Path or BytesIO: The file path or buffer written to.
+        """
         uri = self._validate_uri(uri or BytesIO())
 
         renderer = self.renderer
@@ -927,22 +947,41 @@ class _MediaStream(param.Parameterized):
             )
         return uri
 
-    def join(self, other: _MediaStream) -> _MediaStream:
+    def join(self, other: MediaStream) -> MediaStream:
+        """
+        Connects two homogeneous streams into one by simply extending the resources.
+        For heterogeneous streams, use `streamjoy.connect` instead.
+
+        Args:
+            other (MediaStream): The other stream with identical params to join.
+
+        Returns:
+            MediaStream: The joined stream.
+        """
         stream = self.copy()
-        if isinstance(other, _MediaStream):
+        if isinstance(other, MediaStream):
             stream.resources = self.resources + other.resources
         return stream
 
-    def __add__(self, other: _MediaStream) -> _MediaStream:
+    def __add__(self, other: MediaStream) -> MediaStream:
+        """
+        Connects two homogeneous streams into one by simply extending the resources.
+        """
         return self.join(other)
 
-    def __radd__(self, other: _MediaStream) -> _MediaStream:
+    def __radd__(self, other: MediaStream) -> MediaStream:
+        """
+        Connects two homogeneous streams into one by simply extending the resources.
+        """
         return self.join(other)
 
-    def __copy__(self) -> _MediaStream:
+    def __copy__(self) -> MediaStream:
         return self.copy()
 
     def __len__(self) -> int:
+        """
+        Return the number of resources.
+        """
         return len(self.resources)
 
     def __repr__(self) -> str:
@@ -1006,7 +1045,13 @@ class _MediaStream(param.Parameterized):
         return repr_str
 
 
-class Mp4Stream(_MediaStream):
+class Mp4Stream(MediaStream):
+    """
+    A stream that writes to an MP4.
+
+    See `MediaStream` for all the available parameters.
+    """
+
     from imageio.plugins.pyav import PyAVPlugin
 
     codec = param.String(doc="The codec to use for the video.")
@@ -1098,15 +1143,32 @@ class Mp4Stream(_MediaStream):
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Path | BytesIO:
+        """
+        Write the MP4 stream to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            resources: The resources to write to the file or in memory.
+            **kwargs: Additional keyword arguments to pass.
+
+        Returns:
+            The file path or BytesIO object.
+        """
         uri = self._validate_uri(uri)
         uri = super().write(uri=uri, resources=resources, **kwargs)
         self._display_in_notebook(uri, display=self.display)
         return uri
 
 
-class GifStream(_MediaStream):
+class GifStream(MediaStream):
+    """
+    A stream that writes to a gif.
+
+    See `MediaStream` for all the available parameters.
+    """
+
     from imageio.plugins.pillow import PillowPlugin
 
     loop = param.Integer(doc="The number of times to loop the gif; 0 means infinite.")
@@ -1230,8 +1292,19 @@ class GifStream(_MediaStream):
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Path | BytesIO:
+        """
+        Write the gif stream to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            resources: The resources to write to the file or in memory.
+            **kwargs: Additional keyword arguments to pass.
+
+        Returns:
+            The file path or BytesIO object.
+        """
         optimize = kwargs.pop("optimize", self.optimize)
         uri = self._validate_uri(uri)
         uri = super().write(uri=uri, resources=resources, **kwargs)
@@ -1241,7 +1314,13 @@ class GifStream(_MediaStream):
         return uri
 
 
-class AnyStream(_MediaStream):
+class AnyStream(MediaStream):
+    """
+    A stream that can be materialized into an Mp4Stream or GifStream.
+
+    See `MediaStream` for all the available parameters.
+    """
+
     @classmethod
     def _display_in_notebook(
         cls, obj: Any, display: bool = True, is_media: bool = True
@@ -1251,6 +1330,9 @@ class AnyStream(_MediaStream):
     def materialize(
         self, uri: Path | BytesIO, extension: str | None = None
     ) -> Mp4Stream | GifStream:
+        """
+        Materialize the stream into an Mp4Stream or GifStream.
+        """
         if isinstance(uri, BytesIO) and extension is None:
             extension = ".mp4"
         elif extension is None:
@@ -1273,21 +1355,34 @@ class AnyStream(_MediaStream):
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
         extension: str | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Path | BytesIO:
+        """
+        Write the stream to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            resources: The resources to write to the file or in memory.
+            extension: The extension to use; useful if uri is a file-like object.
+            **kwargs: Additional keyword arguments to pass.
+        """
         uri = self._validate_uri(uri or BytesIO(), match_extension=False)
         stream = self.materialize(uri, extension)
         return stream.write(uri=uri, resources=resources, **kwargs)
 
 
 class ConnectedStreams(param.Parameterized):
+    """
+    Multiple streams connected together.
+    """
+
     streams = param.List(
         default=[],
-        item_type=_MediaStream,
+        item_type=MediaStream,
         doc="The streams to connect.",
     )
 
-    def __init__(self, streams: list[_MediaStream] | None = None, **params) -> None:
+    def __init__(self, streams: list[MediaStream] | None = None, **params) -> None:
         params["streams"] = streams or params.get("streams")
         self.logger = _utils.update_logger()
         super().__init__(**params)
@@ -1296,8 +1391,19 @@ class ConnectedStreams(param.Parameterized):
         self,
         uri: str | Path | BytesIO | None = None,
         extension: str | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> Path | BytesIO:
+        """
+        Write the connected streams to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            extension: The file extension to use.
+            **kwargs: Additional keyword arguments to pass.
+
+        Returns:
+            The file path or BytesIO object.
+        """
         if uri is None:
             uri = BytesIO()
         elif isinstance(uri, str):
@@ -1359,12 +1465,18 @@ class ConnectedStreams(param.Parameterized):
         stream._display_in_notebook(uri, display=stream.display)
         return uri
 
-    def __add__(self, other: _MediaStream) -> ConnectedStreams:
-        if isinstance(other, _MediaStream):
+    def __add__(self, other: MediaStream) -> ConnectedStreams:
+        """
+        Add a stream to the existing list of streams.
+        """
+        if isinstance(other, MediaStream):
             self.streams.append(other)
         return self
 
-    def __radd__(self, other: _MediaStream) -> ConnectedStreams:
+    def __radd__(self, other: MediaStream) -> ConnectedStreams:
+        """
+        Add a stream to the existing list of streams.
+        """
         return self.__add__(other)
 
     def __repr__(self) -> str:
@@ -1379,7 +1491,13 @@ class ConnectedStreams(param.Parameterized):
         return repr_str
 
     def __len__(self) -> int:
+        """
+        Return the total number of frames in all streams.
+        """
         return sum(len(stream) for stream in self.streams)
 
     def __iter__(self) -> Iterable[Path]:
+        """
+        Iterate over the streams.
+        """
         return self.streams

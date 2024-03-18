@@ -9,8 +9,15 @@ from . import _utils
 
 
 class Paused(param.Parameterized):
-    output = param.Parameter()
-    seconds = param.Integer()
+    """
+    A data model for pausing a stream.
+
+    Expand Source code to see all the parameters and descriptions.
+    """
+
+    output = param.Parameter(doc="The output to pause for.")
+
+    seconds = param.Integer(doc="The number of seconds to pause for.")
 
     def __init__(self, output: Any, seconds: int, **params):
         self.output = output
@@ -19,6 +26,12 @@ class Paused(param.Parameterized):
 
 
 class ImageText(param.Parameterized):
+    """
+    A data model for rendering text on an image.
+
+    Expand Source code to see all the parameters and descriptions.
+    """
+
     text = param.String(
         doc="The text to render.",
     )

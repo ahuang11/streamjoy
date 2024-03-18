@@ -27,6 +27,8 @@ pip install streamjoy
 
 ## 🚀 Quick start
 
+### 🐤 Absolute basics
+
 Stream from a list of images--local files work too!
 
 ```python
@@ -38,6 +40,8 @@ stream(resources, uri="goes.gif")  # .gif and .mp4 supported
 ```
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/a78b8b5e-bd28-4df2-aecb-6211cf3bb956" width="500" height="500">
+
+### 💅 Polish up
 
 Specify a few more keywords to:
 
@@ -61,6 +65,8 @@ himawari_stream = stream(
 ```
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
+
+### 👀 Preview inputs
 
 If you'd like to preview the `repr` before writing, drop `uri`.
 
@@ -100,6 +106,8 @@ Then, when ready, call the `write` method to save the animation!
 himawari_stream.write()
 ```
 
+### 🖇️ Connect streams
+
 Connect multiple streams together to provide further context.
 
 ```python
@@ -123,6 +131,8 @@ connect([visible_stream, infrared_stream], uri="goes_connected.gif")
 ```
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/96e8477d-d70b-4c76-9ed4-55dad1e76393" width="500" height="500">
+
+### 📷 Render datasets
 
 You can also render images directly from datasets, either through a custom renderer or a built-in one, and they'll also run in parallel!
 

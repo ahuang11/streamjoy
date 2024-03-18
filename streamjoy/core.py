@@ -14,7 +14,7 @@ def stream(
     renderer_iterables: list | None = None,
     renderer_kwargs: dict | None = None,
     extension: Literal[".mp4", ".gif"] | None = None,
-    **kwargs,
+    **kwargs: dict[str, Any],
 ) -> AnyStream | GifStream | Mp4Stream | Path:
     """
     Create a stream from the given resources.
@@ -26,7 +26,7 @@ def stream(
         renderer_iterables: Additional positional arguments to map over the renderer.
         renderer_kwargs: Additional keyword arguments to pass to the renderer.
         extension: The extension to use; useful if uri is a file-like object.
-        **kwargs: Additional keyword arguments to pass to the stream constructor.
+        **kwargs: Additional keyword arguments to pass.
 
     Returns:
         The stream if uri is None, otherwise the uri.
@@ -69,10 +69,15 @@ def connect(
     uri: str | Path | BytesIO | None = None,
 ) -> ConnectedStreams | Path:
     """
-    Connect multiple streams into a single stream.
+    Connect hetegeneous streams into a single stream.
+
+    Unlike `stream.join`, this function can connect streams
+    with unique params, such as different renderers.
 
     Args:
         streams: The streams to connect.
+        uri: The destination to write the connected streams to.
+            If None, the connected streams are returned.
 
     Returns:
         The connected streams if uri is None, otherwise the uri.
