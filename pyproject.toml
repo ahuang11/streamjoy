@@ -65,7 +65,7 @@ name = "streamjoy"
 authors = [
   { name = "streamjoy", email = "hey.at.py@gmail.com" }
 ]
-description = "Animate, fast and easy"
+description = "Enjoy animating!"
 readme = "README.md"
 dynamic = ["version"]
 classifiers = [

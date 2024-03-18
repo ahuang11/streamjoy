@@ -4,7 +4,7 @@
 
 ---
 
-## 🔥 Animate, fast and easy
+## 🔥 Enjoy animating!
 
 Streamjoy merges images into animations--meticulously designed with sensible defaults and tested to ensure maximum enjoyment and minimal effort.
 
