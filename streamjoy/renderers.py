@@ -1,9 +1,27 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import _utils
 
+if TYPE_CHECKING:
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
 
-def default_pandas_renderer(df_sub: "pd.DataFrame", *args, **kwargs):
+    try:
+        import xarray as xr
+    except ImportError:
+        xr = None
+
+    try:
+        import holoviews as hv
+    except ImportError:
+        hv = None
+
+
+def default_pandas_renderer(df_sub: pd.DataFrame, *args, **kwargs):
     import matplotlib.pyplot as plt
 
     df_sub = df_sub.reset_index()
@@ -26,7 +44,7 @@ def default_pandas_renderer(df_sub: "pd.DataFrame", *args, **kwargs):
     return fig
 
 
-def default_xarray_renderer(da_sel: "xr.DataArray", *args, **kwargs):
+def default_xarray_renderer(da_sel: xr.DataArray, *args, **kwargs):
     import matplotlib.pyplot as plt
 
     da_sel = _utils.validate_xarray(da_sel, warn=False)
@@ -40,7 +58,7 @@ def default_xarray_renderer(da_sel: "xr.DataArray", *args, **kwargs):
     return fig
 
 
-def default_holoviews_renderer(hv_obj: "hv.Element", *args, **kwargs):
+def default_holoviews_renderer(hv_obj: hv.Element, *args, **kwargs):
     import holoviews as hv
 
     backend = kwargs.get("backend", "bokeh")

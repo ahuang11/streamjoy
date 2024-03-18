@@ -65,11 +65,14 @@ file_handlers = {
     },
     ".csv": {
         "import_path": "pandas.read_csv",
+        "concat_path": "pandas.concat",
     },
-    ".json": {
-        "import_path": "pandas.read_json",
+    ".parquet": {
+        "import_path": "pandas.read_parquet",
+        "concat_path": "pandas.concat",
     },
     ".html": {
         "import_path": "pandas.read_html",
+        "concat_path": "pandas.concat",
     },
 }

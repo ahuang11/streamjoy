@@ -5,8 +5,8 @@ from io import BytesIO
 from pathlib import Path
 
 from . import _utils
-from .settings import config
 from .models import Paused
+from .settings import config
 
 
 def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = None):
@@ -50,6 +50,9 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
 
 
 def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = None):
+    if in_memory:
+        raise ValueError("Holoviews renderer does not support in-memory rendering.")
+
     def wrapper(renderer):
         @wraps(renderer)
         def wrapped(*args, **kwargs) -> Path | BytesIO:

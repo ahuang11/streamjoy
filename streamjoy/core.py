@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Literal
 
-from .streams import AnyStream, GifStream, Mp4Stream, ConnectedStreams
+from .streams import AnyStream, ConnectedStreams, GifStream, Mp4Stream
 
 
 def stream(
@@ -31,17 +31,19 @@ def stream(
     Returns:
         The stream if uri is None, otherwise the uri.
     """
-    stream_cls = AnyStream
-    if uri:
-        if isinstance(uri, str):
-            uri = Path(uri)
-        extension = extension or uri.suffix
-        if extension == ".mp4":
-            stream_cls = Mp4Stream
-        elif extension == ".gif":
-            stream_cls = GifStream
-        else:
-            raise ValueError(f"Unsupported file extension {extension}")
+    if isinstance(uri, str):
+        uri = Path(uri)
+
+    extension = extension or (uri and uri.suffix)
+    if extension not in (None, ".mp4", ".gif"):
+        raise ValueError(f"Unsupported extension: {extension}")
+
+    if extension == ".mp4":
+        stream_cls = Mp4Stream
+    elif extension == ".gif":
+        stream_cls = GifStream
+    else:
+        stream_cls = AnyStream
 
     resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
         stream_cls._expand_from_any(

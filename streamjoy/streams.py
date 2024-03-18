@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import gc
 import base64
-from io import BytesIO
+import gc
 from abc import abstractmethod
+from collections.abc import Iterable, Sequence
+from functools import partial
+from inspect import isgenerator
+from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Callable, Iterable
-from inspect import isgenerator
-from functools import partial
-from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Callable
 
 import dask.delayed
 import imageio.v3 as iio
@@ -21,18 +21,33 @@ from imageio.core.v3_plugin_api import PluginV3
 from PIL import Image, ImageDraw
 
 from . import _utils
+from .models import ImageText, Paused
 from .renderers import (
     default_holoviews_renderer,
     default_pandas_renderer,
     default_xarray_renderer,
 )
-from .models import ImageText, Paused
 from .settings import config, file_handlers, obj_handlers
 from .wrappers import wrap_holoviews, wrap_matplotlib
 
+if TYPE_CHECKING:
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+
+    try:
+        import xarray as xr
+    except ImportError:
+        xr = None
+
+    try:
+        import holoviews as hv
+    except ImportError:
+        hv = None
+
 
 class _MediaStream(param.Parameterized):
-
     resources = param.List(
         default=None,
         doc="The resources to render.",
@@ -157,18 +172,18 @@ class _MediaStream(param.Parameterized):
 
         # forward non recognized params to _tbd_kwargs
         params["_tbd_kwargs"] = {}
-        for param in set(params):
-            if param not in self.param:
-                params["_tbd_kwargs"][param] = params.pop(param)
+        for param_key in set(params):
+            if param_key not in self.param:
+                params["_tbd_kwargs"][param_key] = params.pop(param_key)
 
         super().__init__(**params)
 
     @classmethod
     def _select_obj_handler(cls, resources: Any) -> _MediaStream:
-        if isinstance(resources, (Path, str)) and Path(resources).is_dir():
-            return cls._expand_from_directory
         if isinstance(resources, str) and "://" in resources:
             return cls._expand_from_url
+        if isinstance(resources, (Path, str)):
+            return cls._expand_from_paths
 
         for class_or_package_name, method_name in obj_handlers.items():
             module = getattr(resources, "__module__", "").split(".", maxsplit=1)[0]
@@ -187,7 +202,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def _expand_from_xarray(
         cls,
-        resources: "xr.Dataset" | "xr.DataArray",
+        resources: xr.Dataset | xr.DataArray,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -209,6 +224,8 @@ class _MediaStream(param.Parameterized):
         resources = [ds.isel({dim: i}) for i in range(max_frames)]
 
         renderer_kwargs = renderer_kwargs or {}
+        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
+
         if renderer is None:
             renderer = wrap_matplotlib(
                 in_memory=kwargs.get("in_memory"),
@@ -235,7 +252,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def _expand_from_pandas(
         cls,
-        resources: "pd.DataFrame",
+        resources: pd.DataFrame,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -244,12 +261,7 @@ class _MediaStream(param.Parameterized):
         import pandas as pd
 
         df = resources
-        groupby = kwargs.pop("groupby", None)
-
-        if "groupby" in renderer_kwargs:
-            groupby = renderer_kwargs["groupby"]
-        elif groupby is not None and "groupby" not in renderer_kwargs:
-            renderer_kwargs["groupby"] = groupby
+        groupby = kwargs.get("groupby")
 
         total_frames = df.groupby(groupby).size().max() if groupby else len(df)
         max_frames = _utils.get_max_frames(total_frames, kwargs.get("max_frames"))
@@ -259,6 +271,8 @@ class _MediaStream(param.Parameterized):
         ]
 
         renderer_kwargs = renderer_kwargs or {}
+        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
+
         if renderer is None:
             renderer = wrap_matplotlib(
                 in_memory=kwargs.get("in_memory"),
@@ -301,7 +315,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def _expand_from_holoviews(
         cls,
-        resources: "hv.HoloMap" | "hv.DynamicMap",
+        resources: hv.HoloMap | hv.DynamicMap,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -342,6 +356,8 @@ class _MediaStream(param.Parameterized):
         resources = [_select_element(hv_obj, key).opts(title=str(key)) for key in keys]
 
         renderer_kwargs = renderer_kwargs or {}
+        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
+
         if renderer is None:
             renderer = wrap_holoviews(
                 in_memory=kwargs.get("in_memory"),
@@ -386,18 +402,27 @@ class _MediaStream(param.Parameterized):
         from bs4 import BeautifulSoup
 
         base_url = resources
-        pattern = kwargs.pop("pattern")
+        pattern = kwargs.pop("pattern", None)
         sort_key = kwargs.pop("sort_key", None)
         max_files = kwargs.pop("max_files", None)
         file_handler = kwargs.pop("file_handler", None)
         file_handler_kwargs = kwargs.pop("file_handler_kwargs", None)
 
         response = requests.get(resources)
-        response.raise_for_status()
+        content_type = response.headers.get("Content-Type")
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        href = re.compile(pattern.replace("*", ".*"))
-        links = soup.find_all("a", href=href)
+        if pattern is not None:
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+            href = re.compile(pattern.replace("*", ".*"))
+            links = soup.find_all("a", href=href)
+        else:
+            if content_type.startswith("text"):
+                raise ValueError(
+                    f"A pattern must be provided if the URL is a directory of files; "
+                    f"got {resources!r}."
+                )
+            links = [{"href": ""}]
 
         max_files = _utils.get_config_default(
             "max_files", max_files, total_value=len(links), suffix="links"
@@ -423,6 +448,7 @@ class _MediaStream(param.Parameterized):
             _utils.download_file,
             urls,
             kwargs.get("batch_size"),
+            scratch_dir=kwargs.get("scratch_dir"),
             in_memory=kwargs.get("in_memory"),
         )
         paths = client.gather(futures)
@@ -441,12 +467,14 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def _expand_from_paths(
         cls,
-        resources: list[str | Path],
+        resources: list[str | Path] | str,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
         **kwargs,
     ) -> _MediaStream:
+        if isinstance(resources, str):
+            resources = [resources]
 
         sort_key = kwargs.pop("sort_key", None)
         max_files = kwargs.pop("max_files", None)
@@ -462,23 +490,33 @@ class _MediaStream(param.Parameterized):
             paths = paths[:max_files]
 
         # find a file handler
-        extension = paths[0].suffix
+        extension = Path(paths[0]).suffix
         file_handler_meta = file_handlers.get(extension, {})
         file_handler_import_path = file_handler_meta.get("import_path")
+        file_handler_concat_path = file_handler_meta.get("concat_path")
         if file_handler is None and file_handler_import_path is not None:
             file_handler = _utils.import_function(file_handler_import_path)
+            if file_handler_concat_path is not None:
+                file_handler_concat = _utils.import_function(file_handler_concat_path)
 
         # read as objects
         if file_handler is not None:
-            resources = file_handler(paths, **(file_handler_kwargs or {}))
-            return cls._expand_from_any(resources, renderer, renderer_kwargs, **kwargs)
+            if file_handler_concat_path is not None:
+                resources = file_handler_concat(
+                    file_handler(path, **(file_handler_kwargs or {})) for path in paths
+                )
+            else:
+                resources = file_handler(paths, **(file_handler_kwargs or {}))
+            return cls._expand_from_any(
+                resources, renderer, renderer_iterables, renderer_kwargs, **kwargs
+            )
 
         # or simply return image paths
         return paths, renderer, renderer_iterables, renderer_kwargs, kwargs
 
     @classmethod
     def _subset_resources_renderer_iterables(
-        cls, resources: Any, renderer_iterables: list[Any], max_frames: int | None
+        cls, resources: Any, renderer_iterables: list[Any], max_frames: int
     ):
         if len(resources) > max_frames and max_frames != -1:
             color = config["logging_warning_color"]
@@ -507,9 +545,6 @@ class _MediaStream(param.Parameterized):
             obj_handler = cls._select_obj_handler(resources)
             _utils.validate_renderer_iterables(resources, renderer_iterables)
 
-            max_frames = _utils.get_config_default(
-                "max_frames", kwargs.get("max_frames")
-            )
             resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
                 obj_handler(
                     resources,
@@ -519,6 +554,8 @@ class _MediaStream(param.Parameterized):
                     **kwargs,
                 )
             )
+            max_frames = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
+            kwargs["max_frames"] = max_frames
             resources, renderer_iterables = cls._subset_resources_renderer_iterables(
                 resources, renderer_iterables, max_frames
             )
@@ -529,7 +566,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def from_xarray(
         cls,
-        ds: "xr.Dataset" | "xr.DataArray",
+        ds: xr.Dataset | xr.DataArray,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -538,10 +575,17 @@ class _MediaStream(param.Parameterized):
         **kwargs,
     ) -> _MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_xarray(ds, renderer, renderer_kwargs, dim, var, **kwargs)
+            cls._expand_from_xarray(
+                ds,
+                renderer=renderer,
+                renderer_kwargs=renderer_kwargs,
+                dim=dim,
+                var=var,
+                **kwargs,
+            )
         )
         return cls(
-            resources,
+            resources=resources,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
@@ -551,7 +595,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def from_pandas(
         cls,
-        df: "pd.DataFrame",
+        df: pd.DataFrame,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -564,7 +608,7 @@ class _MediaStream(param.Parameterized):
             )
         )
         return cls(
-            resources,
+            resources=resources,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
@@ -574,7 +618,7 @@ class _MediaStream(param.Parameterized):
     @classmethod
     def from_holoviews(
         cls,
-        hv_obj: "hv.HoloMap" | "hv.DynamicMap",
+        hv_obj: hv.HoloMap | hv.DynamicMap,
         renderer: Callable | None = None,
         renderer_iterables: list[Any] | None = None,
         renderer_kwargs: dict | None = None,
@@ -584,7 +628,7 @@ class _MediaStream(param.Parameterized):
             cls._expand_from_holoviews(hv_obj, renderer, renderer_kwargs, **kwargs)
         )
         return cls(
-            resources,
+            resources=resources,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
@@ -595,7 +639,7 @@ class _MediaStream(param.Parameterized):
     def from_url(
         cls,
         base_url: str,
-        pattern: str,
+        pattern: str | None = None,
         sort_key: Callable | None = None,
         max_files: int | None = None,
         file_handler: Callable | None = None,
@@ -607,7 +651,7 @@ class _MediaStream(param.Parameterized):
     ) -> _MediaStream:
         resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
             cls._expand_from_url(
-                base_url=base_url,
+                base_url,
                 pattern=pattern,
                 sort_key=sort_key,
                 max_files=max_files,
@@ -620,7 +664,7 @@ class _MediaStream(param.Parameterized):
             )
         )
         return cls(
-            resources,
+            resources=resources,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
@@ -656,7 +700,7 @@ class _MediaStream(param.Parameterized):
             )
         )
         return cls(
-            resources,
+            resources=resources,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
@@ -722,8 +766,8 @@ class _MediaStream(param.Parameterized):
         if renderer is None and "://" in str(resource_0):
             renderer = partial(
                 _utils.download_file,
-                in_memory=self.in_memory,
                 scratch_dir=self.scratch_dir,
+                in_memory=self.in_memory,
             )
 
         if renderer and self.processes:
@@ -831,10 +875,8 @@ class _MediaStream(param.Parameterized):
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
         **kwargs,
-    ) -> Path:
-        if uri is None:
-            uri = BytesIO()
-        uri = self._validate_uri(uri)
+    ) -> Path | BytesIO:
+        uri = self._validate_uri(uri or BytesIO())
 
         renderer = self.renderer
         renderer_kwargs = self.renderer_kwargs.copy()
@@ -916,7 +958,7 @@ class _MediaStream(param.Parameterized):
         )
 
         if self.intro_title or self.intro_subtitle or self.intro_watermark:
-            repr_str += f"---\nIntro:\n"
+            repr_str += "---\nIntro:\n"
             repr_str += f"  intro_title: {self.intro_title}\n"
             repr_str += f"  intro_subtitle: {self.intro_subtitle}\n"
             repr_str += f"  intro_watermark: {self.intro_watermark}\n"
@@ -944,7 +986,7 @@ class _MediaStream(param.Parameterized):
                 repr_str += f"  {key}: {value}\n"
 
         if self._tbd_kwargs:
-            repr_str += f"---\nTBD Keywords (on write):\n"
+            repr_str += "---\nTBD Keywords (on write):\n"
             for key, value in self._tbd_kwargs.items():
                 if isinstance(value, (list, tuple)):
                     value = f"[{', '.join(map(str, value))}]"
@@ -960,7 +1002,7 @@ class _MediaStream(param.Parameterized):
                 f"  ...\n"
                 f"{indent(str(self.resources[-1]), ' ' * 2)}\n"
             )
-        repr_str += f"---"
+        repr_str += "---"
         return repr_str
 
 
@@ -987,7 +1029,8 @@ class Mp4Stream(_MediaStream):
         if not _utils.using_notebook() or not display:
             return
 
-        from IPython.display import Video, HTML, display as ipydisplay
+        from IPython.display import HTML, Video
+        from IPython.display import display as ipydisplay
 
         if is_media:
             if isinstance(obj, BytesIO):
@@ -1039,7 +1082,8 @@ class Mp4Stream(_MediaStream):
                 image = image[:-1, :, :]
             if image.shape[1] % 2:
                 image = image[:, :-1, :]
-            buf.write_frame(image[:, :, :3], **write_kwargs)
+            image = image[:, :, :3]  # remove alpha channel if present
+            buf.write_frame(image, **write_kwargs)
 
             if pause is not None:
                 _utils.repeat_frame(
@@ -1054,18 +1098,10 @@ class Mp4Stream(_MediaStream):
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        renderer_iterables: list[Any] | None = None,
-        max_frames: int | None = None,
         **kwargs,
-    ) -> Path:
+    ) -> Path | BytesIO:
         uri = self._validate_uri(uri)
-        uri = super().write(
-            uri=uri,
-            resources=resources,
-            renderer_iterables=renderer_iterables,
-            max_frames=max_frames,
-            **kwargs,
-        )
+        uri = super().write(uri=uri, resources=resources, **kwargs)
         self._display_in_notebook(uri, display=self.display)
         return uri
 
@@ -1097,7 +1133,8 @@ class GifStream(_MediaStream):
         if not _utils.using_notebook() or not display:
             return
 
-        from IPython.display import Image, HTML, display as ipydisplay
+        from IPython.display import HTML, Image
+        from IPython.display import display as ipydisplay
 
         if is_media:
             if isinstance(obj, BytesIO):
@@ -1193,19 +1230,11 @@ class GifStream(_MediaStream):
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        renderer_iterables: list[Any] | None = None,
-        max_frames: int | None = None,
         **kwargs,
-    ) -> Path:
+    ) -> Path | BytesIO:
         optimize = kwargs.pop("optimize", None)
         uri = self._validate_uri(uri)
-        uri = super().write(
-            uri=uri,
-            resources=resources,
-            renderer_iterables=renderer_iterables,
-            max_frames=max_frames,
-            **kwargs,
-        )
+        uri = super().write(uri=uri, resources=resources, **kwargs)
         self._display_in_notebook(uri, display=self.display)
         if optimize:
             self._optimize_gif(uri)
@@ -1220,7 +1249,7 @@ class AnyStream(_MediaStream):
         return
 
     def materialize(
-        self, uri: Path | BytesIO, extension: str | None
+        self, uri: Path | BytesIO, extension: str | None = None
     ) -> Mp4Stream | GifStream:
         if isinstance(uri, BytesIO) and extension is None:
             extension = ".mp4"
@@ -1243,22 +1272,15 @@ class AnyStream(_MediaStream):
         self,
         uri: str | Path | BytesIO | None = None,
         resources: Any | None = None,
-        max_frames: int | None = None,
         extension: str | None = None,
         **kwargs,
-    ) -> Path:
+    ) -> Path | BytesIO:
         uri = self._validate_uri(uri or BytesIO(), match_extension=False)
         stream = self.materialize(uri, extension)
-        return stream.write(
-            uri=uri,
-            resources=resources,
-            max_frames=max_frames,
-            **kwargs,
-        )
+        return stream.write(uri=uri, resources=resources, **kwargs)
 
 
 class ConnectedStreams(param.Parameterized):
-
     streams = param.List(
         default=[],
         item_type=_MediaStream,
@@ -1273,29 +1295,21 @@ class ConnectedStreams(param.Parameterized):
     def write(
         self,
         uri: str | Path | BytesIO | None = None,
-        max_frames: int | None = None,
+        extension: str | None = None,
         **kwargs,
-    ) -> Path:
-        uri = Path(uri)
-
+    ) -> Path | BytesIO:
+        if uri is None:
+            uri = BytesIO()
+        elif isinstance(uri, str):
+            uri = Path(uri)
         streams = [
             (
-                stream.materialize(uri.suffix)
+                stream.materialize(uri, extension)
                 if isinstance(stream, AnyStream)
                 else stream
             )
             for stream in self.streams
         ]
-
-        if uri.suffix == ".mp4":
-            extension = Mp4Stream._extension
-        elif uri.suffix == ".gif":
-            extension = GifStream._extension
-        else:
-            raise ValueError(
-                f"Unsupported file extension {uri.suffix}; "
-                "expected '.mp4' or '.gif'."
-            )
 
         client = _utils.get_distributed_client(
             client=kwargs.get("client"),
@@ -1303,11 +1317,12 @@ class ConnectedStreams(param.Parameterized):
             threads_per_worker=kwargs.get("threads_per_worker"),
         )
 
-        num_frames = 0
+        stream_0 = streams[0]
+        extension = stream_0._extension
+
         duration = []
-        for stream in streams:
-            if isinstance(stream, GifStream):
-                num_frames += len(stream)
+        if isinstance(stream_0, GifStream):
+            for stream in streams:
                 duration += stream._compute_duration(
                     stream.intro_title, stream.intro_subtitle, len(stream)
                 )
@@ -1317,13 +1332,13 @@ class ConnectedStreams(param.Parameterized):
                 stream.client = client
                 resources, renderer_iterables = (
                     stream._subset_resources_renderer_iterables(
-                        stream.resources, stream.renderer_iterables, max_frames
+                        stream.resources, stream.renderer_iterables, stream.max_frames
                     )
                 )
                 images = stream._render_images(
                     resources,
                     stream.renderer,
-                    stream.renderer_iterables,
+                    renderer_iterables,
                     stream.renderer_kwargs,
                 )
                 write_kwargs = stream.write_kwargs.copy()

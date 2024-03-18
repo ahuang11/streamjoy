@@ -1,14 +1,14 @@
-import matplotlib.pyplot as plt
 import holoviews as hv
+import matplotlib.pyplot as plt
+
 from streamjoy.renderers import (
+    default_holoviews_renderer,
     default_pandas_renderer,
     default_xarray_renderer,
-    default_holoviews_renderer,
 )
 
 
 class TestDefaultRenderer:
-
     def test_pandas(self, df):
         fig = default_pandas_renderer(df, x="Year", y="life", groupby="Country")
         assert isinstance(fig, plt.Figure)

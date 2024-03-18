@@ -2,17 +2,24 @@ from __future__ import annotations
 
 import inspect
 import logging
+from collections.abc import Iterable
 from io import BytesIO
-from pathlib import Path
-from typing import Any, Callable, Iterable
 from itertools import islice
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable
 
 import imageio.v3 as iio
 import numpy as np
 from dask.distributed import Client, Future, get_client
 
-from .settings import config
 from .models import Paused
+from .settings import config
+
+if TYPE_CHECKING:
+    try:
+        import xarray as xr
+    except ImportError:
+        xr = None
 
 
 def update_logger(
@@ -57,7 +64,11 @@ def warn_default_used(
     if suffix:
         message += f" {suffix}"
     message += f". Suppress this by passing {key!r}."
-    logging.warning(message)
+
+    if total_value is not None and default_value < total_value:
+        logging.warning(message)
+    elif total_value is None:
+        logging.warning(message)
 
 
 def get_config_default(
@@ -115,7 +126,11 @@ def download_file(
     scratch_dir: Path | None = None,
     in_memory: bool = False,
 ) -> str:
-    import requests
+    try:
+        import requests
+    except ImportError:
+        raise ImportError("To directly read from a URL, `pip install requests`")
+
     url_path = Path(url)
     file_name = f"{url_path.parent.parent.name}_{url_path.parent.name}_{url_path.name}"
     uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
@@ -195,6 +210,12 @@ def pop_kwargs(callable: Callable, kwargs: dict) -> None:
     return {arg: kwargs.pop(arg) for arg in args_spec.args if arg in kwargs}
 
 
+def pop_from_cls(cls: type, kwargs: dict) -> dict:
+    return {
+        key: kwargs.pop(key) for key in set(kwargs) if key not in cls.param.values()
+    }
+
+
 def import_function(import_path: str) -> Callable:
     module, function = import_path.rsplit(".", 1)
     module = __import__(module, fromlist=[function])
@@ -202,7 +223,7 @@ def import_function(import_path: str) -> Callable:
 
 
 def validate_xarray(
-    ds: "xr.Dataset" | "xr.DataArray",
+    ds: xr.Dataset | xr.DataArray,
     dim: str | None = None,
     var: str | None = None,
     warn: bool = True,
@@ -260,6 +281,9 @@ def map_over(client, func, resources, batch_size, *args, **kwargs):
 def repeat_frame(
     write: Callable, image: np.ndarray, seconds: int, fps: int, **write_kwargs
 ) -> np.ndarray:
+    if seconds == 0:
+        return image
+
     repeat = int(seconds * fps)
     for _ in range(repeat):
         write(image, **write_kwargs)

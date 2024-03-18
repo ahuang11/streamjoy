@@ -4,7 +4,6 @@ import streamjoy.pandas  # noqa: F401
 
 
 class TestPandas:
-
     def test_dataframe(self, df):
         stream = df.streamjoy(groupby="Country")
         assert stream.renderer_kwargs == {

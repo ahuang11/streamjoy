@@ -4,7 +4,6 @@ import streamjoy.xarray  # noqa: F401
 
 
 class TestXArray:
-
     def test_dataset_3d(self, ds):
         sj = ds.streamjoy()
         assert "vmin" in sj.renderer_kwargs

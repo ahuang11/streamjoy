@@ -2,7 +2,11 @@
 target-version = "py39"
 
 [tool.ruff.lint]
-extend-select = ["I", "TRY", "UP"]
+extend-select = ["I", "UP"]
+extend-ignore = ["TRY003"]
+
+[tool.ruff.lint.flake8-type-checking]
+quote-annotations = true
 
 [tool.pytest.ini_options]
 addopts = "--cov=streamjoy/ --cov-report=term-missing"
@@ -32,6 +36,10 @@ dependencies = [
     "netcdf4",
     "matplotlib",
     "pyarrow",
+    "hvplot",
+    "bs4",
+    "selenium",
+    "webdriver_manager",
 ]
 
 [tool.hatch.envs.default.scripts]
@@ -39,11 +47,11 @@ test = "pytest"
 test-cov-xml = "pytest --cov-report=xml"
 lint = [
   "ruff format .",
-  "ruff --fix .",
+  "ruff check --fix .",
 ]
 lint-check = [
   "ruff format --check .",
-  "ruff .",
+  "ruff check .",
 ]
 docs-serve = "mkdocs serve"
 docs-build = "mkdocs build"

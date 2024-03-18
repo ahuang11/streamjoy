@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import param
 from PIL import ImageDraw, ImageFont
 
@@ -7,12 +9,10 @@ from . import _utils
 
 
 class Paused(param.Parameterized):
-
     output = param.Parameter()
-
     seconds = param.Integer()
 
-    def __init__(self, output: str, seconds: int, **params):
+    def __init__(self, output: Any, seconds: int, **params):
         self.output = output
         self.seconds = seconds
         super().__init__(**params)
@@ -55,7 +55,7 @@ class ImageText(param.Parameterized):
     def __init__(self, text: str, **params) -> None:
         params["text"] = text
         params = _utils.populate_config_defaults(
-            params, self.param.values(), config_prefix="image_text"
+            params, self.param, config_prefix="image_text"
         )
         super().__init__(**params)
 

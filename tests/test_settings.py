@@ -1,10 +1,9 @@
-import pytest
-
 from imageio.v3 import improps
+
 from streamjoy import config, stream
 
+
 class TestConfig:
-    
     def test_update_defaults(self, df):
         config["max_frames"] = 3
         config["ending_pause"] = 0
@@ -15,7 +14,7 @@ class TestConfig:
         buf = sj.write()
         props = improps(buf)
         assert props.n_images == 3
-    
+
     def test_override_defaults(self, df):
         config["max_frames"] = 3
         config["ending_pause"] = 0
