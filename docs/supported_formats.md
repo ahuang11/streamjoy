@@ -18,7 +18,7 @@ from streamjoy import stream
 
 URL_DIR = "https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis/Dailies/surface/"
 
-stream(URL_DIR, pattern="air.sig995.194*.nc", uri="air_temperature.mp4")
+stream(URL_DIR, uri="air_temperature.mp4", pattern="air.sig995.194*.nc")
 ```
 
 ### Pandas DataFrame
@@ -31,7 +31,7 @@ df = pd.read_csv(
     "https://raw.githubusercontent.com/franlopezguzman/gapminder-with-bokeh/master/gapminder_tidy.csv"
 ).set_index("Year")
 df = df.query("Country in ['United States', 'China', 'South Africa']")
-stream(df, groupby="Country", title="{Year}", uri="gapminder.mp4")
+stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 ```
 
 ### XArray Dataset
@@ -41,7 +41,7 @@ from streamjoy import stream
 import xarray as xr
 
 ds = xr.tutorial.open_dataset("air_temperature").isel(time=slice(0, 100))
-stream(ds, cmap="RdBu_r", uri="air_temperature.mp4")
+stream(ds, uri="air_temperature.mp4", cmap="RdBu_r")
 ```
 
 ### HoloViews HoloMap or DynamicMap

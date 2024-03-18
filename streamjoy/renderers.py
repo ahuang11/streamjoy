@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, tuple
 
 from . import _utils
 
 if TYPE_CHECKING:
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        plt = None
+
     try:
         import pandas as pd
     except ImportError:
@@ -21,7 +26,20 @@ if TYPE_CHECKING:
         hv = None
 
 
-def default_pandas_renderer(df_sub: pd.DataFrame, *args, **kwargs):
+def default_pandas_renderer(
+    df_sub: pd.DataFrame, *args: tuple[Any], **kwargs: dict[str, Any]
+) -> plt.Figure:
+    """
+    Render a pandas DataFrame using matplotlib.
+
+    Args:
+        df_sub: The DataFrame to render.
+        *args: Additional positional arguments to pass to the renderer.
+        **kwargs: Additional keyword arguments to pass to the renderer.
+
+    Returns:
+        A matplotlib figure.
+    """
     import matplotlib.pyplot as plt
 
     df_sub = df_sub.reset_index()
@@ -44,7 +62,20 @@ def default_pandas_renderer(df_sub: pd.DataFrame, *args, **kwargs):
     return fig
 
 
-def default_xarray_renderer(da_sel: xr.DataArray, *args, **kwargs):
+def default_xarray_renderer(
+    da_sel: xr.DataArray, *args: tuple[Any], **kwargs: dict[str, Any]
+) -> plt.Figure:
+    """
+    Render an xarray DataArray using matplotlib.
+
+    Args:
+        da_sel: The DataArray to render.
+        *args: Additional positional arguments to pass to the renderer.
+        **kwargs: Additional keyword arguments to pass to the renderer.
+
+    Returns:
+        A matplotlib figure.
+    """
     import matplotlib.pyplot as plt
 
     da_sel = _utils.validate_xarray(da_sel, warn=False)
@@ -58,7 +89,20 @@ def default_xarray_renderer(da_sel: xr.DataArray, *args, **kwargs):
     return fig
 
 
-def default_holoviews_renderer(hv_obj: hv.Element, *args, **kwargs):
+def default_holoviews_renderer(
+    hv_obj: hv.Element, *args: tuple[Any], **kwargs: dict[str, Any]
+) -> hv.Element:
+    """
+    Render a HoloViews Element using the default backend.
+
+    Args:
+        hv_obj: The HoloViews Element to render.
+        *args: Additional positional arguments to pass to the renderer.
+        **kwargs: Additional keyword arguments to pass to the renderer.
+
+    Returns:
+        The rendered HoloViews Element.
+    """
     import holoviews as hv
 
     backend = kwargs.get("backend", "bokeh")

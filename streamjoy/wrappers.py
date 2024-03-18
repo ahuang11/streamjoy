@@ -3,13 +3,28 @@ from __future__ import annotations
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
+from typing import Callable
 
 from . import _utils
 from .models import Paused
 from .settings import config
 
 
-def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = None):
+def wrap_matplotlib(
+    in_memory: bool = False, scratch_dir: str | Path | None = None
+) -> Callable:
+    """
+    Wraps a function used to render a matplotlib figure so that
+    it automatically saves the figure and closes it.
+
+    Args:
+        in_memory: Whether to render the figure in-memory.
+        scratch_dir: The scratch directory to use.
+
+    Returns:
+        The wrapped function.
+    """
+
     def wrapper(renderer):
         @wraps(renderer)
         def wrapped(*args, **kwargs) -> Path | BytesIO:
@@ -49,7 +64,20 @@ def wrap_matplotlib(in_memory: bool = False, scratch_dir: str | Path | None = No
     return wrapper
 
 
-def wrap_holoviews(in_memory: bool = False, scratch_dir: str | Path | None = None):
+def wrap_holoviews(
+    in_memory: bool = False, scratch_dir: str | Path | None = None
+) -> Callable:
+    """
+    Wraps a function used to render a holoviews object so that
+    it automatically saves the object.
+
+    Args:
+        in_memory: Whether to render the object in-memory.
+        scratch_dir: The scratch directory to use.
+
+    Returns:
+        The wrapped function.
+    """
     if in_memory:
         raise ValueError("Holoviews renderer does not support in-memory rendering.")
 

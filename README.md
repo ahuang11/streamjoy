@@ -27,16 +27,21 @@ pip install streamjoy
 
 ## 🚀 Quick start
 
-Stream from a list of images.
+### 🐤 Absolute basics
+
+Stream from a list of images--local files work too!
 
 ```python
 from streamjoy import stream
 
-URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"  # local files work too!
-stream([URL_FMT.format(i=i) for i in range(1, 11)], uri="goes.gif")  # .gif and .mp4 supported
+URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
+resources = [URL_FMT.format(i=i) for i in range(1, 11)]
+stream(resources, uri="goes.gif")  # .gif and .mp4 supported
 ```
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/a78b8b5e-bd28-4df2-aecb-6211cf3bb956" width="500" height="500">
+
+### 💅 Polish up
 
 Specify a few more keywords to:
 
@@ -47,7 +52,9 @@ Specify a few more keywords to:
 from streamjoy import stream
 
 URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
+resources = [URL_FMT.format(i=i) for i in range(1, 11)]
 himawari_stream = stream(
+    resources,
     uri="goes_custom.gif",
     [URL_FMT.format(i=i) for i in range(1, 11)],
     intro_title="Himawari Visible",
@@ -59,6 +66,8 @@ himawari_stream = stream(
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
 
+### 👀 Preview inputs
+
 If you'd like to preview the `repr` before writing, drop `uri`.
 
 Output:
@@ -69,7 +78,7 @@ Output:
   max_frames: 50
   fps: 10
   display: True
-  scratch_dir: /Users/airbook/Applications/Developer/python/repos/streamjoy/_NOTEBOOKS/streamjoy_scratch
+  scratch_dir: streamjoy_scratch
   in_memory: False
 ---
 Intro:
@@ -97,6 +106,8 @@ Then, when ready, call the `write` method to save the animation!
 himawari_stream.write()
 ```
 
+### 🖇️ Connect streams
+
 Connect multiple streams together to provide further context.
 
 ```python
@@ -121,6 +132,8 @@ connect([visible_stream, infrared_stream], uri="goes_connected.gif")
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/96e8477d-d70b-4c76-9ed4-55dad1e76393" width="500" height="500">
 
+### 📷 Render datasets
+
 You can also render images directly from datasets, either through a custom renderer or a built-in one, and they'll also run in parallel!
 
 ```python
@@ -143,12 +156,18 @@ def plot(da, central_longitude, **plot_kwargs):
     plt.colorbar(im, ax=ax, label="°C", shrink=0.8)
     return fig
 
+url = (
+  "https://www.ncei.noaa.gov/data/sea-surface-temperature-"
+  "optimum-interpolation/v2.1/access/avhrr/201008/"
+)
+pattern = "oisst-avhrr-v02r01.*.nc"
 stream(
-    "https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/201008/",
-    "oisst.gif",
-    pattern="oisst-avhrr-v02r01.*.nc",  # Mp4Stream.from_url kwargs
-    max_files=30,
+    url,
     renderer=plot,  # base stream kwargs
+    uri="oisst.mp4",
+    pattern=pattern,  # Mp4Stream.from_url kwargs
+    max_files=30,
+    renderer=plot,  # renderer related kwargs
     renderer_iterables=[np.linspace(-140, -150, 30)],  # iterables; central longitude per frame (30 frames)
     renderer_kwargs=dict(cmap="RdBu_r", vmin=-5, vmax=5),  # renderer kwargs
     # cmap="RdBu_r", # renderer_kwargs can also be propagated for convenience

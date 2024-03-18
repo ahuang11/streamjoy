@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import hvplot.xarray  # noqa: F401
 import pandas as pd
 import pytest
 import xarray as xr
