@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 import xarray as xr
+import hvplot.xarray  # noqa: F401
 
 from streamjoy._utils import get_distributed_client
 from streamjoy.settings import config
