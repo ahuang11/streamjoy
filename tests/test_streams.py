@@ -36,7 +36,7 @@ class AbstractTestMediaStream:
 
     def test_from_url_path(self, stream_cls):
         sj = stream_cls.from_url(
-            "https://github.com/ahuang11/streamjoy/raw/init/tests/data/gapminder.parquet",
+            "https://github.com/ahuang11/streamjoy/raw/main/tests/data/gapminder.parquet",
         )
         self._assert_stream_and_props(sj, stream_cls)
 
