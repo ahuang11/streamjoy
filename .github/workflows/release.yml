@@ -20,7 +20,7 @@ jobs:
       - name: Install packages
         run: |
           python -m pip install --upgrade pip build
-          python -m pip install --upgrade --upgrade-strategy eager -e .[dev]
+          python -m pip install --upgrade --upgrade-strategy eager -e .
 
       - name: Build a binary wheel and a source tarball
         run: |
@@ -31,33 +31,6 @@ jobs:
         with:
           name: built-package
           path: "./dist"
-
-  build-and-publish-docs:
-    name: Build and publish docs
-    needs: [build-release]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          cache: pip
-          cache-dependency-path: requirements*.txt
-
-      - name: Build docs
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade --upgrade-strategy eager -e .[dev]
-          mkdocs build
-
-      - name: Publish docs
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
-        with:
-          branch: docs
-          folder: site
 
   publish-release:
     name: Publish release to PyPI
