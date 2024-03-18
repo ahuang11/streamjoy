@@ -249,10 +249,10 @@ def validate_renderer_iterables(
     resources: list[Any],
     iterables: list[list[Any]],
 ):
-    num_iterables = len(iterables)
-    if num_iterables == 0:
+    if iterables is None:
         return
 
+    num_iterables = len(iterables)
     num_resources = len(resources)
 
     if num_iterables == num_resources:
