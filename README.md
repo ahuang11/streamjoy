@@ -42,21 +42,24 @@ Specify a few more keywords to:
 
 1. add an intro title and subtitle
 2. adjust the pauses
-3. exclude `uri` to view the `repr`
 
 ```python
 from streamjoy import stream
 
 URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
 himawari_stream = stream(
+    uri="goes_custom.gif",
     [URL_FMT.format(i=i) for i in range(1, 11)],
     intro_title="Himawari Visible",
     intro_subtitle="10 Hours Loop",
     intro_pause=1,
     ending_pause=1
 )
-himawari_stream
 ```
+
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
+
+If you'd like to preview the `repr` before writing, drop `uri`.
 
 Output:
 ```yaml
@@ -88,13 +91,11 @@ Resources: (10 frames to stream)
 ---
 ```
 
-Then, simply add back `uri` or call the `write` method to save the animation!
+Then, when ready, call the `write` method to save the animation!
 
 ```python
-himawari_stream.write("goes_custom.gif")
+himawari_stream.write()
 ```
-
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5bc4275e-8377-470d-9e20-524536316de9" width="500" height="500">
 
 Connect multiple streams together to provide further context.
 
