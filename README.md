@@ -5,7 +5,7 @@
 
 ---
 
-## 🔥 Enjoy animating images into GIFs and MP4s!
+## 🔥 Enjoy animating!
 
 Streamjoy turns your images into animations using sensible defaults for fun, hassle-free creation.
 

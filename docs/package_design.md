@@ -1,6 +1,6 @@
 # Package design
 
-## Naming
+## 🪪 Naming
 
 StreamJoy stems from the idea of streaming parallelized, output images to GIF or MP4, *as they get serialized*.
 
@@ -12,7 +12,7 @@ Coincidentally, SJ is also my wife's initials, so it was a perfect fit! :D
 
 I also was thinking of naming this `streamio` and `streamit`, but the former was already taken and the latter too close to `streamlit`.
 
-## Diagram
+## 📶 Diagram
 
 Below is a diagram of the package design. The animation part is actually quite simple--most of the complexity comes with handling various input types, e.g. URLs, files, and datasets.
 
