@@ -1,5 +1,5 @@
 site_name: streamjoy
-site_description: Enjoy animating!
+site_description: Enjoy animating images into GIFs and MP4s!
 
 repo_url: https://github.com/ahuang11/streamjoy
 repo_name: ahuang11/streamjoy
@@ -58,9 +58,10 @@ watch:
     - streamjoy
 
 nav:
-    - Read Me!: index.md
-    - Supported Formats: supported_formats.md
-    - Reference:
+    - Read me first!: index.md
+    - Supported formats: supported_formats.md
+    - Package design: package_design.md
+    - API reference:
         - Core: reference/core.md
         - Models: reference/models.md
         - Streams: reference/streams.md

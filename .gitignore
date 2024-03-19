@@ -1,5 +1,6 @@
 _NOTEBOOKS/
 streamjoy_scratch
+*.ipynb
 
 *.gif
 *.mp4

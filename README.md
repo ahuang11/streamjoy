@@ -1,10 +1,11 @@
-# 🌈 streamjoy 😊
+# 🌈 StreamJoy 😊
 
-[![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions) [![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy) [![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)
+[![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions) [![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy) [![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)<br><br>[![Downloads](https://pepy.tech/badge/streamjoy)](https://pepy.tech/project/streamjoy) [![GitHub stars](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)
+
 
 ---
 
-## 🔥 Enjoy animating!
+## 🔥 Enjoy animating images into GIFs and MP4s!
 
 Streamjoy turns your images into animations using sensible defaults for fun, hassle-free creation.
 
@@ -187,3 +188,6 @@ Read the full docs [here](https://ahuang11.github.io/streamjoy/).
 ---
 
 ❤️ Made with considerable passion.
+
+🌟 Appreciate the project? Consider giving a star!
+
