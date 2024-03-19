@@ -6,6 +6,8 @@ repo_name: ahuang11/streamjoy
 
 theme:
     name: material
+    features:
+        - content.code.copy
     icon:
         logo: material/library
     palette:
@@ -58,7 +60,7 @@ watch:
     - streamjoy
 
 nav:
-    - Read me first!: index.md
+    - Read me!: index.md
     - Supported formats: supported_formats.md
     - Package design: package_design.md
     - API reference:

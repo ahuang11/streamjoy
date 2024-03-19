@@ -1,7 +1,10 @@
 # 🌈 StreamJoy 😊
 
-[![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions) [![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy) [![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)<br><br>[![Downloads](https://pepy.tech/badge/streamjoy)](https://pepy.tech/project/streamjoy) [![GitHub stars](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)
+---
 
+[![build](https://github.com/ahuang11/streamjoy/workflows/Build/badge.svg)](https://github.com/ahuang11/streamjoy/actions) [![codecov](https://codecov.io/gh/ahuang11/streamjoy/branch/master/graph/badge.svg)](https://codecov.io/gh/ahuang11/streamjoy) [![PyPI version](https://badge.fury.io/py/streamjoy.svg)](https://badge.fury.io/py/streamjoy)
+
+[![Downloads](https://pepy.tech/badge/streamjoy)](https://pepy.tech/project/streamjoy) [![GitHub stars](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)](https://img.shields.io/github/stars/ahuang11/streamjoy?style=flat-square)
 
 ---
 
