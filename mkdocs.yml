@@ -64,8 +64,9 @@ nav:
     - Supported formats: supported_formats.md
     - Package design: package_design.md
     - Example recipes:
-        - Nice orbit: example_recipes/nice_orbit.md
+        - Sine wave: example_recipes/sine_wave.md
         - Stream code: example_recipes/stream_code.md
+        - Nice orbit: example_recipes/nice_orbit.md
     - API reference:
         - Core: api_reference/core.md
         - Models: api_reference/models.md
