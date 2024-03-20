@@ -2,9 +2,11 @@
 
 Generates an animation of a code snippet being written character by character.
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5d4fbe96-898d-47fa-a951-81825eb3e172" width="500" height="500">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/4c7f4740-e407-4d86-84d6-b83582887f75" width="500">
 
 ```python
+from textwrap import dedent
+
 import numpy as np
 from PIL import Image, ImageDraw
 from pygments import lex
@@ -69,22 +71,24 @@ def render_frame(
     )
 
 if __name__ == "__main__":
-    code = """
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    from streamjoy import stream, wrap_matplotlib
-
-    @wrap_matplotlib()
-    def plot_frame(i):
-        x = np.linspace(0, 2, 1000)
-        y = np.sin(2 * np.pi * (x - 0.01 * i))
-        fig, ax = plt.subplots()
-        ax.plot(x, y)
-        return fig
-
-    stream(list(range(10)), uri="sine_wave.mp4", renderer=plot_frame)
-    """.strip()
+    code = dedent(
+        """
+        import matplotlib.pyplot as plt
+        import numpy as np
+    
+        from streamjoy import stream, wrap_matplotlib
+    
+        @wrap_matplotlib()
+        def plot_frame(i):
+            x = np.linspace(0, 2, 1000)
+            y = np.sin(2 * np.pi * (x - 0.01 * i))
+            fig, ax = plt.subplots()
+            ax.plot(x, y)
+            return fig
+    
+        stream(list(range(10)), uri="sine_wave.mp4", renderer=plot_frame)
+        """
+    )
 
     formatter = ImageFormatter(
         image_format="gif",
