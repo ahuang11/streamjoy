@@ -21,6 +21,12 @@ stream(..., renderer=plot_frame)
 
 Don't forget there's also `intro_pause` and `ending_pause` to pause at the beginning and end of the animation!
 
+## `.mp4` vs `.gif`
+
+If you need a comprehensive color palette, use `.mp4` as it supports more colors.
+
+For automatic playing and looping, use `.gif`. To reduce the file size of the `.gif`, set `optimize=True`, which uses `pygifsicle` to reduce the file size.
+
 ## Wrap `streamjoy` functionality under `__name__ == "__main__"`
 
 If you run a `.py` script without it, you might encounter the following `RuntimeError`:
