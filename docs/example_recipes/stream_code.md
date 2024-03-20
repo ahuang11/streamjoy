@@ -2,6 +2,8 @@
 
 Generates an animation of a code snippet being written character by character.
 
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/5d4fbe96-898d-47fa-a951-81825eb3e172" width="500" height="500">
+
 ```python
 import numpy as np
 from PIL import Image, ImageDraw
