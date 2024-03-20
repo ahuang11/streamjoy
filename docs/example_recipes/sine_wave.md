@@ -18,5 +18,6 @@ def plot_frame(i):
     ax.plot(x, y)
     return fig
 
-stream(list(range(10)), uri="sine_wave.gif", renderer=plot_frame)
+if __name__ == "__main__":
+    stream(list(range(10)), uri="sine_wave.gif", renderer=plot_frame)
 ```
