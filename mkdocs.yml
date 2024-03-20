@@ -63,6 +63,9 @@ nav:
     - Read me!: index.md
     - Supported formats: supported_formats.md
     - Package design: package_design.md
+    - Example recipes:
+        - Nice orbit: example_recipes/nice_orbit.md
+        - Stream code: example_recipes/stream_code.md
     - API reference:
         - Core: reference/core.md
         - Models: reference/models.md

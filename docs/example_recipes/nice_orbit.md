@@ -2,18 +2,14 @@
 
 Creates a visually appealing, nice orbits of a 2d dynamical system.
 
-Code adapted from [Nice_orbits.ipynb](https://github.com/profConradi/Python_Simulations/blob/main/Nice_orbits.ipynb). Please consider giving [Python_Simulations](https://github.com/profConradi/Python_Simulations/tree/main) a star!
-
-All credits go to [Simone Conradi](https://github.com/profConradi); the only addition here was wrapping the code into a function and using `streamjoy` to create the animation.
-
-
+Code adapted from [Nice_orbits.ipynb](https://github.com/profConradi/Python_Simulations/blob/main/Nice_orbits.ipynb).
+All credits go to [Simone Conradi](https://github.com/profConradi); the only addition here was wrapping the code into a function and using `streamjoy` to create the animation. Please consider giving the [Python_Simulations](https://github.com/profConradi/Python_Simulations/tree/main) repo a star!
 
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import njit
 from streamjoy import stream, wrap_matplotlib
-
 
 @njit
 def meshgrid(x, y):
@@ -27,7 +23,6 @@ def meshgrid(x, y):
             xx[j, k] = k  # change to x[k] if indexing xy
             yy[j, k] = j  # change to y[j] if indexing xy
     return xx, yy
-
 
 @njit
 def calc_orbit(n_points, a, b, n_iter):
@@ -55,7 +50,6 @@ def calc_orbit(n_points, a, b, n_iter):
         l_cy[i * n_points**2 : (i + 1) * n_points**2] = yy.flatten()
     return l_cx, l_cy
 
-
 @wrap_matplotlib()  # automatically handles saving and closing the figure
 def plot_frame(n):
     l_cx, l_cy = calc_orbit(n_points, a + 0.002 * n, b - 0.001 * n, n)
@@ -66,7 +60,6 @@ def plot_frame(n):
     ax.imshow(np.log(h + 1), vmin=0, vmax=5, cmap="magma")
     plt.xticks([]), plt.yticks([])
     return fig
-
 
 if __name__ == "__main__":
     n_points = 500
