@@ -17,7 +17,7 @@ I also was thinking of naming this `streamio` and `streamit`, but the former was
 Below is a diagram of the package design. The animation part is actually quite simple--most of the complexity comes with handling various input types, e.g. URLs, files, and datasets.
 
 <figure>
-    <img src="/assets/design.svg" alt="StreamJoy package design" style="width:100%">
+    <img src="https://github.com/ahuang11/streamjoy/raw/main/docs/assets/design.svg" alt="StreamJoy package design" style="width:100%">
     <figcaption>StreamJoy package design</figcaption>
 </figure>
 
