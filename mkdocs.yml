@@ -62,6 +62,7 @@ watch:
 nav:
     - Read me!: index.md
     - Supported formats: supported_formats.md
+    - Best practices: best_practices.md
     - Package design: package_design.md
     - Example recipes:
         - Sine wave: example_recipes/sine_wave.md
