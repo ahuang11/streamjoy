@@ -148,8 +148,7 @@ You can also render images directly from datasets, either through a custom rende
 import numpy as np
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
-from streamjoy import stream
-from streamjoy.wrappers import wrap_matplotlib
+from streamjoy import stream, wrap_matplotlib
 
 @wrap_matplotlib()
 def plot(da, central_longitude, **plot_kwargs):
