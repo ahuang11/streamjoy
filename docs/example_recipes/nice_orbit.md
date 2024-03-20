@@ -5,6 +5,10 @@ Creates a visually appealing, nice orbits of a 2d dynamical system.
 Code adapted from [Nice_orbits.ipynb](https://github.com/profConradi/Python_Simulations/blob/main/Nice_orbits.ipynb).
 All credits go to [Simone Conradi](https://github.com/profConradi); the only addition here was wrapping the code into a function and using `streamjoy` to create the animation. Please consider giving the [Python_Simulations](https://github.com/profConradi/Python_Simulations/tree/main) repo a star!
 
+<video controls="true" allowfullscreen="true">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/775fa0ff-540c-4e48-b751-b68823ec511b" type="video/mp4">
+</video>
+
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
