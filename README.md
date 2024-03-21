@@ -14,11 +14,13 @@ Streamjoy turns your images into animations using sensible defaults for fun, has
 
 It cuts down the boilerplate and time to work on animations, and it's simple to start with just a few lines of code.
 
-Install it with just pip!
+Install it with just pip to start, blazingly fast!
 
 ```python
 pip install streamjoy
 ```
+
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/7c5db7fe-498d-4282-b082-d7f8b36eb915" width="500">
 
 ## 🛠️ Built-in features
 
@@ -185,7 +187,7 @@ if __name__ == "__main__":
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/3db0ae48-d7d5-4e00-a4a4-50bbe4bb3d19" width="500" height="500">
 
-Read the full docs [here](https://ahuang11.github.io/streamjoy/).
+Check out all the supported formats [here](https://ahuang11.github.io/streamjoy/supported_formats/) or best practices [here](https://ahuang11.github.io/streamjoy/best_practices/). (Or maybe you're interested in the design--[here](https://ahuang11.github.io/streamjoy/package_design/))
 
 ---
 
