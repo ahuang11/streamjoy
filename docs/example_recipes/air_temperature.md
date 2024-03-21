@@ -1,5 +1,9 @@
 # Air temperature
 
+<video controls="true" allowfullscreen="true">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/cf7d8849-0c1c-4f8b-9592-a29040e2d30f" type="video/mp4">
+</video>
+
 Super barebones example of rendering air temperature data from xarray.
 
 Highlights:
