@@ -1,4 +1,4 @@
-# Stream Code
+# Stream code
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/4c7f4740-e407-4d86-84d6-b83582887f75" width="500">
 

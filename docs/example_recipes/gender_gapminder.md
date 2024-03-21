@@ -1,4 +1,4 @@
-# Gender Gapminder
+# Gender gapminder
 
 <video controls="true" allowfullscreen="true">
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/a684665b-e049-490c-8459-d6ae274160bf" type="video/mp4">

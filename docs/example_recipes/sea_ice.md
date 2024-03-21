@@ -1,4 +1,4 @@
-# Sea Ice
+# Sea ice
 
 <video controls="true" allowfullscreen="true">
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/f141fe3e-1435-4ddb-a8cc-f09cf1850c6e" type="video/mp4">

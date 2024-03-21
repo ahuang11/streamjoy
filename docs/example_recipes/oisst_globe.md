@@ -1,4 +1,4 @@
-# OISST Globe
+# OISST globe
 
 
 <video controls="true" allowfullscreen="true">

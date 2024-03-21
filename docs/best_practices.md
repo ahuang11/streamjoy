@@ -55,6 +55,34 @@ from streamjoy import stream
 stream(...).write()
 ```
 
+## 🚪 Use accessors for `pandas` and `xarray` objects
+
+```python
+import pandas as pd
+import streamjoy.pandas
+
+df = pd.DataFrame(...)
+
+# equivalent to streamjoy.stream(df)
+df.stream(...)
+
+# series also works!
+df["col"].stream(...)
+```
+
+```python
+import xarray as xr
+import streamjoy.xarray
+
+ds = xr.Dataset(...)
+
+# equivalent to streamjoy.stream(ds)
+ds.stream(...)
+
+# dataarray also works!
+ds["var"].stream(...)
+```
+
 ## ⛓️ Use `sum` to join homogeneous streams and `connect` for hetereogenous
 
 Use `sum` to join homogeneous streams, i.e. streams that have the same keyword arguments.

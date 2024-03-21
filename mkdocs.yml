@@ -65,7 +65,11 @@ nav:
     - Best practices: best_practices.md
     - Package design: package_design.md
     - Example recipes:
+        - Air temperature: example_recipes/air_temperature.md
         - Sine wave: example_recipes/sine_wave.md
+        - Sea ice: example_recipes/sea_ice.md
+        - OISST globe: example_recipes/oisst_globe.md
+        - Gender gapminder: example_recipes/gender_gapminder.md
         - Stream code: example_recipes/stream_code.md
         - Nice orbit: example_recipes/nice_orbit.md
     - API reference:
