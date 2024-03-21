@@ -1,6 +1,6 @@
-# Best Practices
+# Best practices
 
-## Take advantage of `Paused`, `intro_pause`, `ending_pause`
+## ⏸️ Take advantage of `Paused`, `intro_pause`, `ending_pause`
 
 Animations can be good, but sometimes you want to pause at various points of the animation to provide context or to emphasize a point.
 
@@ -21,13 +21,13 @@ stream(..., renderer=plot_frame)
 
 Don't forget there's also `intro_pause` and `ending_pause` to pause at the beginning and end of the animation!
 
-## `.mp4` vs `.gif`
+## 🎥 When to use `.mp4` vs `.gif`
 
 If you need a comprehensive color palette, use `.mp4` as it supports more colors.
 
 For automatic playing and looping, use `.gif`. To reduce the file size of the `.gif`, set `optimize=True`, which uses `pygifsicle` to reduce the file size.
 
-## Wrap `streamjoy` functionality under `__name__ == "__main__"`
+## 📦 Wrap `streamjoy` functionality under `__name__ == "__main__"`
 
 If you run a `.py` script without it, you might encounter the following `RuntimeError`:
 
@@ -50,7 +50,7 @@ is not going to be frozen to produce an executable.
 
 It's fine without it in notebooks though.
 
-## Change the default `config` settings
+## ⚙️ Change the default `config` settings
 
 StreamJoy uses a simple `config` dict to store settings. You can change the default settings by modifying the `streamjoy.config` object.
 
@@ -75,7 +75,7 @@ import streamjoy
 streamjoy.config = {"max_frames": -1}
 ```
 
-## Explicitly set keyword arguments
+## 🔧 Explicitly set keyword arguments
 
 Much of StreamJoy is based on sensible defaults to get you started quickly, but you should override them.
 
@@ -87,6 +87,6 @@ StreamJoy will warn you on some settings if you don't override them:
 No 'max_frames' specified; using the default 50 / 100 frames. Pass `-1` to use all frames. Suppress this by passing 'max_frames'.
 ```
 
-## Use `processes=False` for rendering HoloViews objects to PNG
+## 🧩 Use `processes=False` for rendering HoloViews objects
 
 This is done automatically! However, in case there's an edge case, note that the kdims/vdims don't seem to carry over properly to the subprocesses when rendering HoloViews objects. It might complain that it can't find the desired dimensions.
