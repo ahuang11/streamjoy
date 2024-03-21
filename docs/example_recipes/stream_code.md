@@ -1,8 +1,13 @@
 # Stream Code
 
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/4c7f4740-e407-4d86-84d6-b83582887f75" width="500">
+
 Generates an animation of a code snippet being written character by character.
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/4c7f4740-e407-4d86-84d6-b83582887f75" width="500">
+Highlights:
+
+- Uses a custom `renderer` function to create each frame of the animation.
+- Propagates `formatter`, `max_line_length`, and `max_line_number` to the custom `renderer` function.
 
 ```python
 from textwrap import dedent
@@ -12,7 +17,6 @@ from PIL import Image, ImageDraw
 from pygments import lex
 from pygments.formatters import ImageFormatter
 from pygments.lexers import get_lexer_by_name
-
 from streamjoy import stream
 
 def _custom_format(

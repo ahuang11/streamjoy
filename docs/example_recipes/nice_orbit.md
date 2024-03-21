@@ -1,13 +1,18 @@
-# Nice Orbits
+# Nice orbit
+
+<video controls="true" allowfullscreen="true">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/775fa0ff-540c-4e48-b751-b68823ec511b" type="video/mp4">
+</video>
 
 Creates a visually appealing, nice orbits of a 2d dynamical system.
 
 Code adapted from [Nice_orbits.ipynb](https://github.com/profConradi/Python_Simulations/blob/main/Nice_orbits.ipynb).
 All credits go to [Simone Conradi](https://github.com/profConradi); the only addition here was wrapping the code into a function and using `streamjoy` to create the animation. Please consider giving the [Python_Simulations](https://github.com/profConradi/Python_Simulations/tree/main) repo a star!
 
-<video controls="true" allowfullscreen="true">
-<source src="https://github.com/ahuang11/streamjoy/assets/15331990/775fa0ff-540c-4e48-b751-b68823ec511b" type="video/mp4">
-</video>
+Highlights:
+
+- Uses `wrap_matplotlib` to automatically handle saving and closing the figure.
+- Uses a custom `renderer` function to create each frame of the animation.
 
 ```python
 import numpy as np
@@ -54,7 +59,7 @@ def calc_orbit(n_points, a, b, n_iter):
         l_cy[i * n_points**2 : (i + 1) * n_points**2] = yy.flatten()
     return l_cx, l_cy
 
-@wrap_matplotlib()  # automatically handles saving and closing the figure
+@wrap_matplotlib()
 def plot_frame(n):
     l_cx, l_cy = calc_orbit(n_points, a + 0.002 * n, b - 0.001 * n, n)
     area = [[-1, 1], [-1, 1]]
@@ -68,5 +73,5 @@ def plot_frame(n):
 if __name__ == "__main__":
     n_points = 500
     a, b = 5.48, 4.28
-    stream(np.arange(1, 100).tolist(), uri="nice_orbit.mp4", renderer=plot_frame)
+    stream(np.arange(1, 100).tolist(), renderer=plot_frame, uri="nice_orbit.mp4")
 ```

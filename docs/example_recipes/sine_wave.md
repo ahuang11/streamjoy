@@ -1,13 +1,17 @@
 # Sine Wave
 
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/61f103dc-5c6d-4957-a95c-5f66d6e0d71a" width="500">
+
 A bare-bones example of how to use `stream` to create a sine wave animation.
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/61f103dc-5c6d-4957-a95c-5f66d6e0d71a" width="500">
+Highlights:
+
+- Uses `wrap_matplotlib` to automatically handle saving and closing the figure.
+- Uses a custom `renderer` function to create each frame of the animation.
 
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
-
 from streamjoy import stream, wrap_matplotlib
 
 @wrap_matplotlib()
