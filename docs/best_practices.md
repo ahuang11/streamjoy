@@ -21,6 +21,58 @@ stream(..., renderer=plot_frame)
 
 Don't forget there's also `intro_pause` and `ending_pause` to pause at the beginning and end of the animation!
 
+## 📊 Decorate custom `renderer` with `wrap_*` decorators
+
+If you're using a custom `renderer`, you can use `wrap_matplotlib` and `wrap_holoviews` to automatically handle saving and closing the figure.
+
+```python
+from streamjoy import stream, wrap_matplotlib
+
+@wrap_matplotlib()
+def plot_frame(time):
+    ...
+
+stream(..., renderer=plot_frame)
+```
+
+## 🗣️ Provide context with `intro_title` and `intro_subtitle`
+
+Use `intro_title` and `intro_subtitle` to provide context at the beginning of the animation.
+
+```python
+from streamjoy import stream
+
+stream(..., intro_title="Himawari Visible", intro_subtitle="10 Hours Loop")
+```
+
+## 💾 Save to memory for testing purposes
+
+If you're just testing out the animation, you can save it to memory instead of to disk by calling write without specifying a uri.
+
+```python
+from streamjoy import stream
+
+stream(...).write()
+```
+
+## ⛓️ Use `sum` to join homogeneous streams and `connect` for hetereogenous
+
+Use `sum` to join homogeneous streams, i.e. streams that have the same keyword arguments.
+
+```python
+from streamjoy import stream, sum
+
+sum([stream(..., **same_kwargs) for i in range(10)])
+```
+
+Use `connect` to join heterogeneous streams, i.e. streams that have different keyword arguments, like different `intro_title` and `intro_subtitle`.
+
+```python
+from streamjoy import stream, connect
+
+connect([stream(..., **kwargs1), stream(..., **kwargs2)])
+```
+
 ## 🎥 When to use `.mp4` vs `.gif`
 
 If you need a comprehensive color palette, use `.mp4` as it supports more colors.

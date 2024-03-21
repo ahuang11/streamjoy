@@ -46,5 +46,5 @@ if __name__ == "__main__":
         )
 
     joined_stream = sum(streams)
-    joined_stream.write("sst_oisst.mp4")
+    joined_stream.write("oisst_globe.mp4")
 ```
