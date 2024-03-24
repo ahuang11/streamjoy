@@ -296,5 +296,5 @@ def imread_with_pause(
 ) -> np.ndarray | Paused:
     imread_kwargs = dict(extension=extension, plugin=plugin)
     if isinstance(uri, Paused):
-        return Paused(iio.imread(uri.output, **imread_kwargs), uri.seconds).squeeze()
+        return Paused(iio.imread(uri.output, **imread_kwargs).squeeze(), uri.seconds)
     return iio.imread(uri, **imread_kwargs).squeeze()

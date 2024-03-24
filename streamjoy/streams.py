@@ -1249,8 +1249,11 @@ class GifStream(MediaStream):
 
         self._prepend_intro(buf, intro_frame, **write_kwargs)
 
-        for image in images:
+        for i, image in enumerate(images):
             image = _utils.get_result(image)
+            if isinstance(image, Paused):
+                duration[i] = image.seconds * 1000
+                image = image.output
             buf.write(image[:, :, :3], **write_kwargs)
             del image
 

@@ -42,6 +42,7 @@ def client():
 
 @pytest.fixture(autouse=True, scope="session")
 def default_config():
+    config["fps"] = 1
     config["max_frames"] = 3
     config["max_files"] = 2
     config["ending_pause"] = 0
