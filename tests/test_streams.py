@@ -1,10 +1,9 @@
 import pytest
-import pandas as pd
 from imageio.v3 import improps
 
+from streamjoy.models import Paused
 from streamjoy.streams import GifStream, Mp4Stream
 from streamjoy.wrappers import wrap_matplotlib
-from streamjoy.models import Paused
 
 
 class AbstractTestMediaStream:
@@ -47,6 +46,7 @@ class AbstractTestMediaStream:
         sj = stream_cls.from_directory(data_dir, pattern="*.png")
         self._assert_stream_and_props(sj, stream_cls)
 
+
 class TestGifStream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")
     def stream_cls(self):
@@ -60,6 +60,7 @@ class TestGifStream(AbstractTestMediaStream):
         buf = stream_cls.from_pandas(df, renderer=renderer).write()
         props = improps(buf)
         assert props.n_images == 3
+
 
 class TestMp4Stream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")
