@@ -17,7 +17,7 @@ class Paused(param.Parameterized):
 
     output = param.Parameter(doc="The output to pause for.")
 
-    seconds = param.Integer(doc="The number of seconds to pause for.")
+    seconds = param.Number(doc="The number of seconds to pause for.")
 
     def __init__(self, output: Any, seconds: int, **params):
         self.output = output

@@ -170,3 +170,13 @@ No 'max_frames' specified; using the default 50 / 100 frames. Pass `-1` to use a
 ## 🧩 Use `processes=False` for rendering HoloViews objects
 
 This is done automatically! However, in case there's an edge case, note that the kdims/vdims don't seem to carry over properly to the subprocesses when rendering HoloViews objects. It might complain that it can't find the desired dimensions.
+
+## 📚 Use `threads_per_worker` if flickering
+
+Matplotlib is not always thread-safe, so if you're seeing flickering, set `threads_per_worker=1`.
+
+```python
+from streamjoy import stream
+
+stream(..., threads_per_worker=1)
+```

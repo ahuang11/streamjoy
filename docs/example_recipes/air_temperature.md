@@ -11,6 +11,7 @@ Highlights:
 import xarray as xr
 import streamjoy.xarray
 
-ds = xr.tutorial.open_dataset("air_temperature")
-ds.streamjoy("air_temperature.mp4")
+if __name__ == "__main__":
+    ds = xr.tutorial.open_dataset("air_temperature")
+    ds.streamjoy("air_temperature.mp4")
 ```
