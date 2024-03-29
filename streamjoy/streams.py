@@ -25,6 +25,7 @@ from .models import ImageText, Paused
 from .renderers import (
     default_holoviews_renderer,
     default_pandas_renderer,
+    default_polars_renderer,
     default_xarray_renderer,
 )
 from .settings import config, file_handlers, obj_handlers
@@ -35,6 +36,11 @@ if TYPE_CHECKING:
         import pandas as pd
     except ImportError:
         pd = None
+
+    try:
+        import polars as pl
+    except ImportError:
+        pl = None
 
     try:
         import xarray as xr
@@ -318,6 +324,76 @@ class MediaStream(param.Parameterized):
                 )
 
         return resources, renderer, renderer_iterables, renderer_kwargs, kwargs
+
+    @classmethod
+    def _expand_from_polars(
+        cls,
+        resources: pl.DataFrame,
+        renderer: Callable | None = None,
+        renderer_iterables: list[Any] | None = None,
+        renderer_kwargs: dict | None = None,
+        **kwargs,
+    ):
+        import polars as pl
+
+        groupby = kwargs.get("groupby")
+
+        if groupby:
+            group_sizes = (
+                resources.groupby(groupby)
+                .agg(pl.count())
+                .sort(by="count")
+            )
+            total_frames = group_sizes.select(pl.col("count").max()).to_numpy()[0, 0]
+        else:
+            total_frames = len(resources)
+
+        max_frames = _utils.get_max_frames(total_frames, kwargs.get("max_frames"))
+        resources_expanded = [
+            resources.groupby(groupby).head(i) if groupby else resources.head(i)
+            for i in range(1, max_frames + 1)
+        ]
+
+        renderer_kwargs = renderer_kwargs or {}
+        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
+
+        if renderer is None:
+            renderer = wrap_holoviews(
+                in_memory=kwargs.get("in_memory"),
+                scratch_dir=kwargs.get("scratch_dir"),
+            )(default_polars_renderer)
+            numeric_cols = [
+                col
+                for col in resources.columns
+                if resources[col].dtype
+                in [pl.Float64, pl.Int64, pl.Float32, pl.Int32]
+            ]
+            if "x" not in renderer_kwargs:
+                for col in numeric_cols:
+                    if col != groupby:
+                        renderer_kwargs["x"] = col
+                        break
+                _utils.warn_default_used(
+                    "x", renderer_kwargs["x"], suffix="from the dataframe"
+                )
+            if "y" not in renderer_kwargs:
+                for col in numeric_cols:
+                    if col not in (renderer_kwargs["x"], groupby):
+                        renderer_kwargs["y"] = col
+                        break
+                _utils.warn_default_used(
+                    "y", renderer_kwargs["y"], suffix="from the dataframe"
+                )
+            if "xlabel" not in renderer_kwargs:
+                renderer_kwargs["xlabel"] = (
+                    renderer_kwargs["x"].title().replace("_", " ")
+                )
+            if "ylabel" not in renderer_kwargs:
+                renderer_kwargs["ylabel"] = (
+                    renderer_kwargs["y"].title().replace("_", " ")
+                )
+
+        return resources_expanded, renderer, renderer_iterables, renderer_kwargs, kwargs
 
     @classmethod
     def _expand_from_holoviews(

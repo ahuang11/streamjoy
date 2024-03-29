@@ -47,6 +47,8 @@ obj_handlers = {
     "pandas.DataFrame": "_expand_from_pandas",
     "pandas.Series": "_expand_from_pandas",
     "holoviews": "_expand_from_holoviews",
+    "polars.DataFrame": "_expand_from_polars",
+    "polars.Series": "_expand_from_polars",
 }
 
 file_handlers = {
