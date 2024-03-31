@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import os
 import inspect
 import logging
+import os
 from collections.abc import Iterable
 from io import BytesIO
 from itertools import islice
@@ -298,7 +298,10 @@ def repeat_frame(
 
 
 def imread_with_pause(
-    uri: Any | Paused, extension: str | None = None, plugin: str | None = None, fsspec_fs: Any | None = None
+    uri: Any | Paused,
+    extension: str | None = None,
+    plugin: str | None = None,
+    fsspec_fs: Any | None = None,
 ) -> np.ndarray | Paused:
     imread_kwargs = dict(extension=extension, plugin=plugin)
     seconds = None

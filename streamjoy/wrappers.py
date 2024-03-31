@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from typing import Any
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from . import _utils
 from .models import Paused
 from .settings import config
 
+
 def wrap_matplotlib(
-    in_memory: bool = False, scratch_dir: str | Path | None = None, fsspec_fs: Any | None = None
+    in_memory: bool = False,
+    scratch_dir: str | Path | None = None,
+    fsspec_fs: Any | None = None,
 ) -> Callable:
     """
     Wraps a function used to render a matplotlib figure so that
@@ -74,7 +76,9 @@ def wrap_matplotlib(
 
 
 def wrap_holoviews(
-    in_memory: bool = False, scratch_dir: str | Path | None = None, fsspec_fs: Any | None = None
+    in_memory: bool = False,
+    scratch_dir: str | Path | None = None,
+    fsspec_fs: Any | None = None,
 ) -> Callable:
     """
     Wraps a function used to render a holoviews object so that
@@ -110,7 +114,7 @@ def wrap_holoviews(
                 file_name=f"{hash(hv_obj)}.png",
                 scratch_dir=scratch_dir,
                 in_memory=in_memory,
-                fsspec_fs=fsspec_fs
+                fsspec_fs=fsspec_fs,
             )
             if backend == "bokeh":
                 from bokeh.io.export import export_png
