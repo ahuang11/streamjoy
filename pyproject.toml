@@ -78,6 +78,8 @@ dependencies = [
     "dask[distributed]",
     "imageio[pyav]>=2.34.0",
     "pygifsicle==1.0.5",
+    "requests",
+    "bs4",
 ]
 
 [project.urls]
