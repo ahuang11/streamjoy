@@ -135,7 +135,7 @@ def download_file(
     url_path = Path(url)
     file_name = f"{url_path.parent.parent.name}_{url_path.parent.name}_{url_path.name}"
     uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
-    if not isinstance(BytesIO) and os.path.exists(uri):
+    if not isinstance(uri, BytesIO) and os.path.exists(uri):
         return uri
 
     response = requests.get(url, stream=True)
@@ -204,10 +204,11 @@ def resolve_uri(
     output_dir = get_config_default("scratch_dir", scratch_dir, warn=False)
     if fsspec_fs:
         fsspec_fs.mkdir(output_dir, exist_ok=True, parents=True)
+        uri = os.path.join(output_dir, file_name)
     else:
-        output_dir = Path(scratch_dir)
+        output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
-    uri = os.path.join(output_dir, file_name)
+        uri = output_dir / file_name
     return uri
 
 
@@ -306,8 +307,8 @@ def imread_with_pause(
     imread_kwargs = dict(extension=extension, plugin=plugin)
     seconds = None
     if isinstance(uri, Paused):
-        uri = uri.output
         seconds = uri.seconds
+        uri = uri.output
     if fsspec_fs:
         with fsspec_fs.open(uri, "rb") as f:
             image = iio.imread(f, **imread_kwargs)
