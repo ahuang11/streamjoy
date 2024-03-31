@@ -1115,7 +1115,7 @@ class Mp4Stream(MediaStream):
         intro_frame = self._create_intro(images)
         self._prepend_intro(buf, intro_frame, **write_kwargs)
 
-        for image in images:
+        for i, image in enumerate(images):
             image = _utils.get_result(image)
 
             pause = None
@@ -1135,9 +1135,11 @@ class Mp4Stream(MediaStream):
                     buf.write_frame, image, pause, self.fps, **write_kwargs
                 )
 
-        _utils.repeat_frame(
-            buf.write_frame, image, self.ending_pause, self.fps, **write_kwargs
-        )
+            if i == len(images) - 1:
+                _utils.repeat_frame(
+                    buf.write_frame, image, self.ending_pause, self.fps, **write_kwargs
+                )
+            del image
 
     def write(
         self,
