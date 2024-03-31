@@ -3,3 +3,8 @@ contact_links:
   - name: StreamJoy Discussion
     url: https://github.com/ahuang11/streamjoy/discussions
     about: Need help? Ask the community here!
+
+issue_types:
+  - name: Issue
+    description: Create a report to help improve
+    template: issue.md
