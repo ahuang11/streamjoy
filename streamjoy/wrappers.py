@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -9,9 +10,8 @@ from . import _utils
 from .models import Paused
 from .settings import config
 
-
 def wrap_matplotlib(
-    in_memory: bool = False, scratch_dir: str | Path | None = None
+    in_memory: bool = False, scratch_dir: str | Path | None = None, fsspec_fs: Any | None = None
 ) -> Callable:
     """
     Wraps a function used to render a matplotlib figure so that
@@ -20,6 +20,7 @@ def wrap_matplotlib(
     Args:
         in_memory: Whether to render the figure in-memory.
         scratch_dir: The scratch directory to use.
+        fsspec_fs: The fsspec filesystem to use.
 
     Returns:
         The wrapped function.
@@ -52,8 +53,16 @@ def wrap_matplotlib(
                 file_name=f"{hash(fig)}.jpg",
                 scratch_dir=scratch_dir,
                 in_memory=in_memory,
+                fsspec_fs=fsspec_fs,
             )
-            fig.savefig(uri, format="jpg")
+            if fsspec_fs:
+                with fsspec_fs.open(uri, "wb") as f:
+                    buf = BytesIO()
+                    fig.savefig(buf, format="jpg")
+                    buf.seek(0)
+                    f.write(buf.read())
+            else:
+                fig.savefig(uri, format="jpg")
             plt.close(fig)
             return (
                 uri if not return_paused else Paused(output=uri, seconds=output.seconds)
@@ -65,7 +74,7 @@ def wrap_matplotlib(
 
 
 def wrap_holoviews(
-    in_memory: bool = False, scratch_dir: str | Path | None = None
+    in_memory: bool = False, scratch_dir: str | Path | None = None, fsspec_fs: Any | None = None
 ) -> Callable:
     """
     Wraps a function used to render a holoviews object so that
@@ -101,6 +110,7 @@ def wrap_holoviews(
                 file_name=f"{hash(hv_obj)}.png",
                 scratch_dir=scratch_dir,
                 in_memory=in_memory,
+                fsspec_fs=fsspec_fs
             )
             if backend == "bokeh":
                 from bokeh.io.export import export_png
@@ -120,7 +130,14 @@ def wrap_holoviews(
                         webdriver=webdriver,
                     )
             else:
-                hv.save(hv_obj, uri, fmt="png")
+                if fsspec_fs:
+                    with fsspec_fs.open(uri, "wb") as f:
+                        buf = BytesIO()
+                        hv.save(hv_obj, buf, fmt="png")
+                        buf.seek(0)
+                        f.write(buf.read())
+                else:
+                    hv.save(hv_obj, uri, fmt="png")
 
             return (
                 uri if not return_paused else Paused(output=uri, seconds=output.seconds)
