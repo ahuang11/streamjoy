@@ -203,7 +203,10 @@ def resolve_uri(
 
     output_dir = get_config_default("scratch_dir", scratch_dir, warn=False)
     if fsspec_fs:
-        fsspec_fs.mkdir(output_dir, exist_ok=True, parents=True)
+        try:
+            fsspec_fs.mkdir(output_dir, exist_ok=True, parents=True)
+        except FileExistsError:
+            pass
         uri = os.path.join(output_dir, file_name)
     else:
         output_dir = Path(output_dir)
