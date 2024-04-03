@@ -46,7 +46,7 @@ stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/be0fc06c-c821-4c45-91a3-8c898e730851" type="video/mp4">
 </video>
 
-## 🐻‍❄️ Plotly Figure or Graph Object
+## 🐻‍❄️ Polars DataFrame
 ```python
 from streamjoy import stream
 import polars as pl
