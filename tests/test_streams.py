@@ -46,6 +46,9 @@ class AbstractTestMediaStream:
         sj = stream_cls.from_directory(data_dir, pattern="*.png")
         self._assert_stream_and_props(sj, stream_cls)
 
+    def test_fsspec_fs(self, stream_cls, df, fsspec_fs):
+        sj = stream_cls.from_pandas(df, fsspec_fs=fsspec_fs)
+        self._assert_stream_and_props(sj, stream_cls)
 
 class TestGifStream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")

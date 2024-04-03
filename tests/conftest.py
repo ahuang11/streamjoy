@@ -51,3 +51,12 @@ def default_config():
 @pytest.fixture(scope="session")
 def data_dir():
     return DATA_DIR
+
+
+@pytest.fixture(scope="session")
+def fsspec_fs():
+    try:
+        import fsspec
+        return fsspec.filesystem("file")
+    except ImportError:
+        pytest.skip("fsspec not installed")
