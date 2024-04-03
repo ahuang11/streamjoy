@@ -22,4 +22,5 @@ def patch(name="streamjoy"):
     pl.api.register_series_namespace(name)(StreamAccessor)
     pl.api.register_lazyframe_namespace(name)(StreamAccessor)
 
+
 patch()

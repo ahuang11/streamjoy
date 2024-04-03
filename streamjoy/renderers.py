@@ -14,7 +14,7 @@ if TYPE_CHECKING:
         import pandas as pd
     except ImportError:
         pd = None
-    
+
     try:
         import polars as pl
     except ImportError:

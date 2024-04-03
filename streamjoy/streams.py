@@ -339,11 +339,7 @@ class MediaStream(param.Parameterized):
         groupby = kwargs.get("groupby")
 
         if groupby:
-            group_sizes = (
-                resources.groupby(groupby)
-                .agg(pl.count())
-                .sort(by="count")
-            )
+            group_sizes = resources.groupby(groupby).agg(pl.count()).sort(by="count")
             total_frames = group_sizes.select(pl.col("count").max()).to_numpy()[0, 0]
         else:
             total_frames = len(resources)
@@ -365,8 +361,7 @@ class MediaStream(param.Parameterized):
             numeric_cols = [
                 col
                 for col in resources.columns
-                if resources[col].dtype
-                in [pl.Float64, pl.Int64, pl.Float32, pl.Int32]
+                if resources[col].dtype in [pl.Float64, pl.Int64, pl.Float32, pl.Int32]
             ]
             if "x" not in renderer_kwargs:
                 for col in numeric_cols:
