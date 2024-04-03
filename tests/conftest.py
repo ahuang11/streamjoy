@@ -2,6 +2,7 @@ from pathlib import Path
 
 import hvplot.xarray  # noqa: F401
 import pandas as pd
+import polars as pl
 import pytest
 import xarray as xr
 
@@ -23,6 +24,11 @@ def ds():
 @pytest.fixture
 def df():
     return pd.read_parquet(PARQUET_PATH)
+
+
+@pytest.fixture
+def pl_df():
+    return pl.read_parquet(PARQUET_PATH)
 
 
 @pytest.fixture

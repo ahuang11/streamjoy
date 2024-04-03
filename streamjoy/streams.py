@@ -699,6 +699,29 @@ class MediaStream(param.Parameterized):
         )
 
     @classmethod
+    def from_polars(
+        cls,
+        df: pl.DataFrame,
+        renderer: Callable | None = None,
+        renderer_iterables: list[Any] | None = None,
+        renderer_kwargs: dict | None = None,
+        groupby: str | None = None,
+        **kwargs,
+    ) -> MediaStream:
+        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
+            cls._expand_from_polars(
+                df, renderer, renderer_kwargs, groupby=groupby, **kwargs
+            )
+        )
+        return cls(
+            resources=resources,
+            renderer=renderer,
+            renderer_iterables=renderer_iterables,
+            renderer_kwargs=renderer_kwargs,
+            **kwargs,
+        )
+
+    @classmethod
     def from_holoviews(
         cls,
         hv_obj: hv.HoloMap | hv.DynamicMap,
