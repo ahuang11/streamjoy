@@ -16,6 +16,11 @@ if TYPE_CHECKING:
         pd = None
 
     try:
+        import polars as pl
+    except ImportError:
+        pl = None
+
+    try:
         import xarray as xr
     except ImportError:
         xr = None
@@ -60,6 +65,27 @@ def default_pandas_renderer(
         df_sub.plot(*args, ax=ax, **kwargs)
 
     return fig
+
+
+def default_polars_renderer(
+    df_sub: pl.DataFrame, *args: tuple[Any], **kwargs: dict[str, Any]
+) -> hv.Element:
+    """
+    Render a polars DataFrame using HoloViews.
+
+    Args:
+        df_sub: The DataFrame to render.
+        *args: Additional positional arguments to pass to the renderer.
+        **kwargs: Additional keyword arguments to pass to the renderer.
+
+    Returns:
+        The rendered HoloViews Element.
+    """
+    by = kwargs.pop("groupby", None)
+    if by:
+        kwargs["by"] = by
+    hv_obj = df_sub.plot(*args, **kwargs)
+    return default_holoviews_renderer(hv_obj)
 
 
 def default_xarray_renderer(

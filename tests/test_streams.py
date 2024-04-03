@@ -17,6 +17,10 @@ class AbstractTestMediaStream:
         sj = stream_cls.from_pandas(df)
         self._assert_stream_and_props(sj, stream_cls)
 
+    def test_from_polars(self, stream_cls, pl_df):
+        sj = stream_cls.from_polars(pl_df)
+        self._assert_stream_and_props(sj, stream_cls)
+
     def test_from_xarray(self, stream_cls, ds):
         sj = stream_cls.from_xarray(ds)
         self._assert_stream_and_props(sj, stream_cls)

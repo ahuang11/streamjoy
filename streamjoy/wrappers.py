@@ -99,7 +99,7 @@ def wrap_holoviews(
         def wrapped(*args, **kwargs) -> Path | BytesIO:
             import holoviews as hv
 
-            backend = kwargs.get("backend", hv.Store.current_backend)
+            backend = kwargs.get("backend", "bokeh")
             hv.extension(backend)
 
             output = renderer(*args, **kwargs)
