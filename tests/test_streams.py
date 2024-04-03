@@ -50,6 +50,7 @@ class AbstractTestMediaStream:
         sj = stream_cls.from_pandas(df, fsspec_fs=fsspec_fs)
         self._assert_stream_and_props(sj, stream_cls)
 
+
 class TestGifStream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")
     def stream_cls(self):

@@ -57,6 +57,7 @@ def data_dir():
 def fsspec_fs():
     try:
         import fsspec
+
         return fsspec.filesystem("file")
     except ImportError:
         pytest.skip("fsspec not installed")
