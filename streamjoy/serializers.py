@@ -5,11 +5,7 @@ from inspect import isgenerator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-import holoviews as hv
 import numpy as np
-import pandas as pd
-import polars as pl
-import xarray as xr
 
 from . import _utils
 from .models import Serialized
@@ -23,6 +19,26 @@ from .settings import file_handlers, obj_handlers
 from .wrappers import wrap_holoviews, wrap_matplotlib
 
 if TYPE_CHECKING:
+    try:
+        import pandas as pd
+    except ImportError:
+        pd = None
+
+    try:
+        import polars as pl
+    except ImportError:
+        pl = None
+
+    try:
+        import xarray as xr
+    except ImportError:
+        xr = None
+
+    try:
+        import holoviews as hv
+    except ImportError:
+        hv = None
+
     from .streams import MediaStream
 
 
