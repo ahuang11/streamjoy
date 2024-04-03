@@ -92,3 +92,28 @@ class ImageText(param.Parameterized):
             anchor=self.anchor,
             **self.kwargs,
         )
+
+
+class Serialized(param.Parameterized):
+    resources = param.List(doc="The list of resources.")
+    renderer = param.Callable(doc="The rendering function to use on the resources.")
+    renderer_iterables = param.List(
+        doc="Additional iterable arguments to pass to the renderer.",
+        allow_None=True,
+    )
+    renderer_kwargs = param.Dict(
+        doc="Additional keyword arguments to pass to the renderer.",
+        allow_None=True,
+    )
+
+    def __init__(
+        self, resources, renderer, renderer_iterables, renderer_kwargs, kwargs, **params
+    ):
+        super().__init__(
+            resources=resources,
+            renderer=renderer,
+            renderer_iterables=renderer_iterables,
+            renderer_kwargs=renderer_kwargs,
+            **params,
+        )
+        self.kwargs = kwargs

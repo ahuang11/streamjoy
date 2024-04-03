@@ -5,7 +5,6 @@ import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
 from functools import partial
-from inspect import isgenerator
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
@@ -22,14 +21,16 @@ from PIL import Image, ImageDraw
 
 from . import _utils
 from .models import ImageText, Paused
-from .renderers import (
-    default_holoviews_renderer,
-    default_pandas_renderer,
-    default_polars_renderer,
-    default_xarray_renderer,
+from .serializers import (
+    serialize_appropriately,
+    serialize_holoviews,
+    serialize_pandas,
+    serialize_paths,
+    serialize_polars,
+    serialize_url,
+    serialize_xarray,
 )
-from .settings import config, file_handlers, obj_handlers
-from .wrappers import wrap_holoviews, wrap_matplotlib
+from .settings import config
 
 if TYPE_CHECKING:
     try:
@@ -196,459 +197,6 @@ class MediaStream(param.Parameterized):
         super().__init__(**params)
 
     @classmethod
-    def _select_obj_handler(cls, resources: Any) -> MediaStream:
-        if isinstance(resources, str) and "://" in resources:
-            return cls._expand_from_url
-        if isinstance(resources, (Path, str)):
-            return cls._expand_from_paths
-
-        for class_or_package_name, method_name in obj_handlers.items():
-            module = getattr(resources, "__module__", "").split(".", maxsplit=1)[0]
-            type_ = type(resources).__name__
-            if (
-                f"{module}.{type_}" == class_or_package_name
-                or module == class_or_package_name
-            ):
-                return getattr(cls, method_name)
-
-        raise ValueError(
-            f"Could not find a method to handle {type(resources)}; "
-            f"supported classes/packages are {list(obj_handlers.keys())}."
-        )
-
-    @classmethod
-    def _expand_from_xarray(
-        cls,
-        resources: xr.Dataset | xr.DataArray,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ):
-        ds = resources
-        dim = kwargs.pop("dim", None)
-        var = kwargs.pop("var", None)
-
-        ds = _utils.validate_xarray(ds, dim=dim, var=var)
-        if not dim:
-            dim = list(ds.dims)[0]
-            _utils.warn_default_used("dim", dim, suffix="from the dataset")
-        elif dim not in ds.dims:
-            raise ValueError(f"{dim!r} not in {ds.dims!r}")
-
-        total_frames = len(ds[dim])
-        max_frames = _utils.get_max_frames(total_frames, kwargs.get("max_frames"))
-        resources = [ds.isel({dim: i}) for i in range(max_frames)]
-
-        renderer_kwargs = renderer_kwargs or {}
-        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
-
-        if renderer is None:
-            renderer = wrap_matplotlib(
-                in_memory=kwargs.get("in_memory"),
-                scratch_dir=kwargs.get("scratch_dir"),
-                fsspec_fs=kwargs.get("fsspec_fs"),
-            )(default_xarray_renderer)
-            ds_0 = resources[0]
-            if ds_0.ndim >= 2:
-                renderer_kwargs["vmin"] = renderer_kwargs.get(
-                    "vmin", _utils.get_result(ds_0.min()).item()
-                )
-                renderer_kwargs["vmax"] = renderer_kwargs.get(
-                    "vmax", _utils.get_result(ds_0.max()).item()
-                )
-            else:
-                renderer_kwargs["ylim"] = renderer_kwargs.get(
-                    "ylim",
-                    (
-                        _utils.get_result(ds_0.min()).item(),
-                        _utils.get_result(ds_0.max()).item(),
-                    ),
-                )
-        return resources, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
-    def _expand_from_pandas(
-        cls,
-        resources: pd.DataFrame,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ):
-        import pandas as pd
-
-        df = resources
-        groupby = kwargs.get("groupby")
-
-        total_frames = df.groupby(groupby).size().max() if groupby else len(df)
-        max_frames = _utils.get_max_frames(total_frames, kwargs.get("max_frames"))
-        resources = [
-            df.groupby(groupby, as_index=False).head(i) if groupby else df.head(i)
-            for i in range(1, max_frames + 1)
-        ]
-
-        renderer_kwargs = renderer_kwargs or {}
-        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
-
-        if renderer is None:
-            renderer = wrap_matplotlib(
-                in_memory=kwargs.get("in_memory"),
-                scratch_dir=kwargs.get("scratch_dir"),
-                fsspec_fs=kwargs.get("fsspec_fs"),
-            )(default_pandas_renderer)
-            if "x" not in renderer_kwargs:
-                if df.index.name or isinstance(df, pd.Series):
-                    renderer_kwargs["x"] = df.index.name
-                else:
-                    for col in df.columns:
-                        if col != groupby:
-                            break
-                    renderer_kwargs["x"] = col
-                _utils.warn_default_used(
-                    "x", renderer_kwargs["x"], suffix="from the dataframe"
-                )
-            if "y" not in renderer_kwargs:
-                if isinstance(df, pd.Series):
-                    col = df.name
-                else:
-                    numeric_cols = df.select_dtypes(include="number").columns
-                    for col in numeric_cols:
-                        if col not in (renderer_kwargs["x"], groupby):
-                            break
-                renderer_kwargs["y"] = col
-                _utils.warn_default_used(
-                    "y", renderer_kwargs["y"], suffix="from the dataframe"
-                )
-            if "xlabel" not in renderer_kwargs:
-                renderer_kwargs["xlabel"] = (
-                    renderer_kwargs["x"].title().replace("_", " ")
-                )
-            if "ylabel" not in renderer_kwargs:
-                renderer_kwargs["ylabel"] = (
-                    renderer_kwargs["y"].title().replace("_", " ")
-                )
-
-        return resources, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
-    def _expand_from_polars(
-        cls,
-        resources: pl.DataFrame,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ):
-        import polars as pl
-
-        groupby = kwargs.get("groupby")
-
-        if groupby:
-            group_sizes = resources.groupby(groupby).agg(pl.count()).sort(by="count")
-            total_frames = group_sizes.select(pl.col("count").max()).to_numpy()[0, 0]
-        else:
-            total_frames = len(resources)
-
-        max_frames = _utils.get_max_frames(total_frames, kwargs.get("max_frames"))
-        resources_expanded = [
-            resources.groupby(groupby).head(i) if groupby else resources.head(i)
-            for i in range(1, max_frames + 1)
-        ]
-
-        renderer_kwargs = renderer_kwargs or {}
-        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
-
-        if renderer is None:
-            renderer = wrap_holoviews(
-                in_memory=kwargs.get("in_memory"),
-                scratch_dir=kwargs.get("scratch_dir"),
-            )(default_polars_renderer)
-            numeric_cols = [
-                col
-                for col in resources.columns
-                if resources[col].dtype in [pl.Float64, pl.Int64, pl.Float32, pl.Int32]
-            ]
-            if "x" not in renderer_kwargs:
-                for col in numeric_cols:
-                    if col != groupby:
-                        renderer_kwargs["x"] = col
-                        break
-                _utils.warn_default_used(
-                    "x", renderer_kwargs["x"], suffix="from the dataframe"
-                )
-            if "y" not in renderer_kwargs:
-                for col in numeric_cols:
-                    if col not in (renderer_kwargs["x"], groupby):
-                        renderer_kwargs["y"] = col
-                        break
-                _utils.warn_default_used(
-                    "y", renderer_kwargs["y"], suffix="from the dataframe"
-                )
-            if "xlabel" not in renderer_kwargs:
-                renderer_kwargs["xlabel"] = (
-                    renderer_kwargs["x"].title().replace("_", " ")
-                )
-            if "ylabel" not in renderer_kwargs:
-                renderer_kwargs["ylabel"] = (
-                    renderer_kwargs["y"].title().replace("_", " ")
-                )
-
-        return resources_expanded, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
-    def _expand_from_holoviews(
-        cls,
-        resources: hv.HoloMap | hv.DynamicMap,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ):
-        import holoviews as hv
-
-        backend = hv.Store.current_backend
-        hv.extension(backend)
-
-        def _select_element(hv_obj, key):
-            try:
-                resource = hv_obj[key]
-            except Exception:
-                resource = hv_obj.select(**{kdims[0].name: key})
-            return resource
-
-        hv_obj = resources
-        if isinstance(hv_obj, (hv.core.spaces.DynamicMap, hv.core.spaces.HoloMap)):
-            hv_map = hv_obj
-        elif issubclass(
-            type(hv_obj), (hv.core.layout.Layoutable, hv.core.overlay.Overlayable)
-        ):
-            hv_map = hv_obj[0]
-
-        if not isinstance(hv_map, (hv.core.spaces.DynamicMap, hv.core.spaces.HoloMap)):
-            raise ValueError("Can only handle HoloMap and DynamicMap objects.")
-        elif isinstance(hv_map, hv.core.spaces.DynamicMap):
-            kdims = hv_map.kdims
-            keys = hv_map.kdims[0].values
-        else:
-            kdims = hv_map.kdims
-            keys = hv_map.keys()
-
-        if len(kdims) > 1:
-            raise ValueError("Can only handle 1D HoloViews objects.")
-
-        resources = [_select_element(hv_obj, key).opts(title=str(key)) for key in keys]
-
-        renderer_kwargs = renderer_kwargs or {}
-        renderer_kwargs.update(_utils.pop_from_cls(cls, kwargs))
-
-        if renderer is None:
-            renderer = wrap_holoviews(
-                in_memory=kwargs.get("in_memory"),
-                scratch_dir=kwargs.get("scratch_dir"),
-                fsspec_fs=kwargs.get("fsspec_fs"),
-            )(default_holoviews_renderer)
-            clims = {}
-            for hv_el in hv_obj.traverse(full_breadth=False):
-                if isinstance(hv_el, hv.DynamicMap):
-                    hv.render(hv_el, backend=backend)
-
-                if isinstance(hv_el, hv.Element):
-                    if hv_el.ndims > 1:
-                        vdim = hv_el.vdims[0].name
-                        array = hv_el.dimension_values(vdim)
-                        clim = (np.nanmin(array), np.nanmax(array))
-                        clims[vdim] = clim
-            renderer_kwargs.update(
-                backend=backend,
-                clims=clims,
-            )
-
-        if kwargs.get("processes"):
-            cls.logger.warning(
-                "HoloViews rendering does not support processes; "
-                "setting processes=False."
-            )
-        kwargs["processes"] = False
-        return resources, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
-    def _expand_from_url(
-        cls,
-        resources: str,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ) -> MediaStream:
-        import re
-
-        import requests
-        from bs4 import BeautifulSoup
-
-        base_url = resources
-        pattern = kwargs.pop("pattern", None)
-        sort_key = kwargs.pop("sort_key", None)
-        max_files = kwargs.pop("max_files", None)
-        file_handler = kwargs.pop("file_handler", None)
-        file_handler_kwargs = kwargs.pop("file_handler_kwargs", None)
-
-        response = requests.get(resources)
-        content_type = response.headers.get("Content-Type")
-
-        if pattern is not None:
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
-            href = re.compile(pattern.replace("*", ".*"))
-            links = soup.find_all("a", href=href)
-        else:
-            if content_type.startswith("text"):
-                raise ValueError(
-                    f"A pattern must be provided if the URL is a directory of files; "
-                    f"got {resources!r}."
-                )
-            links = [{"href": ""}]
-
-        max_files = _utils.get_config_default(
-            "max_files", max_files, total_value=len(links), suffix="links"
-        )
-        if max_files > 0:
-            links = links[:max_files]
-
-        if len(links) == 0:
-            raise ValueError(
-                f"No links found with pattern {pattern!r} at {base_url!r}."
-            )
-
-        # download files
-        urls = [base_url + link.get("href") for link in links]
-        client = _utils.get_distributed_client(
-            client=kwargs.get("client"),
-            processes=kwargs.get("processes"),
-            threads_per_worker=kwargs.get("threads_per_worker"),
-        )
-
-        futures = _utils.map_over(
-            client,
-            _utils.download_file,
-            urls,
-            kwargs.get("batch_size"),
-            scratch_dir=kwargs.get("scratch_dir"),
-            in_memory=kwargs.get("in_memory"),
-        )
-        paths = client.gather(futures)
-        return cls._expand_from_paths(
-            paths,
-            sort_key=sort_key,
-            max_files=max_files,
-            file_handler=file_handler,
-            file_handler_kwargs=file_handler_kwargs,
-            renderer=renderer,
-            renderer_iterables=renderer_iterables,
-            renderer_kwargs=renderer_kwargs,
-            **kwargs,
-        )
-
-    @classmethod
-    def _expand_from_paths(
-        cls,
-        resources: list[str | Path] | str,
-        renderer: Callable | None = None,
-        renderer_iterables: list[Any] | None = None,
-        renderer_kwargs: dict | None = None,
-        **kwargs,
-    ) -> MediaStream:
-        if isinstance(resources, str):
-            resources = [resources]
-
-        sort_key = kwargs.pop("sort_key", None)
-        max_files = kwargs.pop("max_files", None)
-        file_handler = kwargs.pop("file_handler", None)
-        file_handler_kwargs = kwargs.pop("file_handler_kwargs", None)
-
-        paths = sorted(resources, key=sort_key)
-
-        max_files = _utils.get_config_default(
-            "max_files", max_files, total_value=len(paths), suffix="paths"
-        )
-        if max_files > 0:
-            paths = paths[:max_files]
-
-        # find a file handler
-        extension = Path(paths[0]).suffix
-        file_handler_meta = file_handlers.get(extension, {})
-        file_handler_import_path = file_handler_meta.get("import_path")
-        file_handler_concat_path = file_handler_meta.get("concat_path")
-        if file_handler is None and file_handler_import_path is not None:
-            file_handler = _utils.import_function(file_handler_import_path)
-            if file_handler_concat_path is not None:
-                file_handler_concat = _utils.import_function(file_handler_concat_path)
-
-        # read as objects
-        if file_handler is not None:
-            if file_handler_concat_path is not None:
-                resources = file_handler_concat(
-                    file_handler(path, **(file_handler_kwargs or {})) for path in paths
-                )
-            else:
-                resources = file_handler(paths, **(file_handler_kwargs or {}))
-            return cls._expand_from_any(
-                resources, renderer, renderer_iterables, renderer_kwargs, **kwargs
-            )
-
-        # or simply return image paths
-        return paths, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
-    def _subset_resources_renderer_iterables(
-        cls, resources: Any, renderer_iterables: list[Any], max_frames: int
-    ):
-        if len(resources) > max_frames and max_frames != -1:
-            color = config["logging_warning_color"]
-            reset = config["logging_reset_color"]
-            cls.logger.warning(
-                f"There are a total of {len(resources)} frames, "
-                f"but streaming only {color}{max_frames}{reset}. "
-                f"Set max_frames to -1 to stream all frames."
-            )
-        resources = resources[: max_frames or max_frames]
-        renderer_iterables = [
-            iterable[: len(resources)] for iterable in renderer_iterables or []
-        ]
-        return resources, renderer_iterables
-
-    @classmethod
-    def _expand_from_any(
-        cls,
-        resources: Any,
-        renderer: Callable,
-        renderer_iterables: list[Any],
-        renderer_kwargs: dict[str, Any],
-        **kwargs,
-    ):
-        if not (isinstance(resources, (list, tuple)) or isgenerator(resources)):
-            obj_handler = cls._select_obj_handler(resources)
-            _utils.validate_renderer_iterables(resources, renderer_iterables)
-
-            resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-                obj_handler(
-                    resources,
-                    renderer=renderer,
-                    renderer_iterables=renderer_iterables,
-                    renderer_kwargs=renderer_kwargs,
-                    **kwargs,
-                )
-            )
-            max_frames = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
-            kwargs["max_frames"] = max_frames
-            resources, renderer_iterables = cls._subset_resources_renderer_iterables(
-                resources, renderer_iterables, max_frames
-            )
-            _utils.pop_kwargs(obj_handler, renderer_kwargs)
-            _utils.pop_kwargs(obj_handler, kwargs)
-        return resources, renderer, renderer_iterables, renderer_kwargs, kwargs
-
-    @classmethod
     def from_xarray(
         cls,
         ds: xr.Dataset | xr.DataArray,
@@ -659,23 +207,17 @@ class MediaStream(param.Parameterized):
         var: str | None = None,
         **kwargs,
     ) -> MediaStream:
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_xarray(
-                ds,
-                renderer=renderer,
-                renderer_kwargs=renderer_kwargs,
-                dim=dim,
-                var=var,
-                **kwargs,
-            )
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_xarray(
+            cls,
+            ds,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
+            dim=dim,
+            var=var,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def from_pandas(
@@ -687,18 +229,16 @@ class MediaStream(param.Parameterized):
         groupby: str | None = None,
         **kwargs,
     ) -> MediaStream:
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_pandas(
-                df, renderer, renderer_kwargs, groupby=groupby, **kwargs
-            )
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_pandas(
+            cls,
+            resources=df,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
+            groupby=groupby,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def from_polars(
@@ -710,18 +250,16 @@ class MediaStream(param.Parameterized):
         groupby: str | None = None,
         **kwargs,
     ) -> MediaStream:
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_polars(
-                df, renderer, renderer_kwargs, groupby=groupby, **kwargs
-            )
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_polars(
+            cls,
+            resources=df,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
+            groupby=groupby,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def from_holoviews(
@@ -732,16 +270,15 @@ class MediaStream(param.Parameterized):
         renderer_kwargs: dict | None = None,
         **kwargs,
     ) -> MediaStream:
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_holoviews(hv_obj, renderer, renderer_kwargs, **kwargs)
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_holoviews(
+            cls,
+            resources=hv_obj,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def from_url(
@@ -757,27 +294,20 @@ class MediaStream(param.Parameterized):
         renderer_kwargs: dict | None = None,
         **kwargs,
     ) -> MediaStream:
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_url(
-                base_url,
-                pattern=pattern,
-                sort_key=sort_key,
-                max_files=max_files,
-                file_handler=file_handler,
-                file_handler_kwargs=file_handler_kwargs,
-                renderer=renderer,
-                renderer_iterables=renderer_iterables,
-                renderer_kwargs=renderer_kwargs,
-                **kwargs,
-            )
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_url(
+            cls,
+            resources=base_url,
+            pattern=pattern,
+            sort_key=sort_key,
+            max_files=max_files,
+            file_handler=file_handler,
+            file_handler_kwargs=file_handler_kwargs,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def from_directory(
@@ -794,26 +324,19 @@ class MediaStream(param.Parameterized):
         **kwargs,
     ) -> MediaStream:
         paths = Path(base_dir).glob(pattern)
-        resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-            cls._expand_from_paths(
-                paths,
-                sort_key=sort_key,
-                max_files=max_files,
-                file_handler=file_handler,
-                file_handler_kwargs=file_handler_kwargs,
-                renderer=renderer,
-                renderer_iterables=renderer_iterables,
-                renderer_kwargs=renderer_kwargs,
-                **kwargs,
-            )
-        )
-        return cls(
-            resources=resources,
+        serialized = serialize_paths(
+            cls,
+            resources=paths,
+            sort_key=sort_key,
+            max_files=max_files,
+            file_handler=file_handler,
+            file_handler_kwargs=file_handler_kwargs,
             renderer=renderer,
             renderer_iterables=renderer_iterables,
             renderer_kwargs=renderer_kwargs,
             **kwargs,
         )
+        return cls(**serialized.param.values(), **serialized.kwargs)
 
     @classmethod
     def _display_in_notebook(
@@ -1016,9 +539,14 @@ class MediaStream(param.Parameterized):
             resources = self.resources
             renderer_iterables = self.renderer_iterables
         else:
-            resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-                self._expand_from_any(resources, renderer, renderer_kwargs, **kwargs)
+            serialized = serialize_appropriately(
+                self, resources, renderer, renderer_kwargs, **kwargs
             )
+            resources = serialized.resources
+            renderer = serialized.renderer
+            renderer_iterables = serialized.renderer_iterables
+            renderer_kwargs = serialized.renderer_kwargs
+            kwargs = serialized.kwargs
 
         # Do this after for efficiency; also it's possible processes is set to False
         self.client = _utils.get_distributed_client(
@@ -1548,7 +1076,7 @@ class ConnectedStreams(param.Parameterized):
             for i, stream in enumerate(streams):
                 stream.client = client
                 resources, renderer_iterables = (
-                    stream._subset_resources_renderer_iterables(
+                    _utils.subset_resources_renderer_iterables(
                         stream.resources, stream.renderer_iterables, stream.max_frames
                     )
                 )
