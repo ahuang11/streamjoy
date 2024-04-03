@@ -163,6 +163,10 @@ class MediaStream(param.Parameterized):
         doc="Whether to store intermediate results in memory.",
     )
 
+    fsspec_fs = param.Parameter(
+        doc="The fsspec filesystem to use for reading and writing.",
+    )
+
     display = param.Boolean(
         doc="Whether to display the output in the notebook after rendering.",
     )
@@ -237,6 +241,7 @@ class MediaStream(param.Parameterized):
             renderer = wrap_matplotlib(
                 in_memory=kwargs.get("in_memory"),
                 scratch_dir=kwargs.get("scratch_dir"),
+                fsspec_fs=kwargs.get("fsspec_fs"),
             )(default_xarray_renderer)
             ds_0 = resources[0]
             if ds_0.ndim >= 2:
@@ -284,6 +289,7 @@ class MediaStream(param.Parameterized):
             renderer = wrap_matplotlib(
                 in_memory=kwargs.get("in_memory"),
                 scratch_dir=kwargs.get("scratch_dir"),
+                fsspec_fs=kwargs.get("fsspec_fs"),
             )(default_pandas_renderer)
             if "x" not in renderer_kwargs:
                 if df.index.name or isinstance(df, pd.Series):
@@ -369,6 +375,7 @@ class MediaStream(param.Parameterized):
             renderer = wrap_holoviews(
                 in_memory=kwargs.get("in_memory"),
                 scratch_dir=kwargs.get("scratch_dir"),
+                fsspec_fs=kwargs.get("fsspec_fs"),
             )(default_holoviews_renderer)
             clims = {}
             for hv_el in hv_obj.traverse(full_breadth=False):
@@ -798,7 +805,7 @@ class MediaStream(param.Parameterized):
         is_like_image = isinstance(resource_0, np.ndarray) and resource_0.ndim == 3
         if not is_like_image:
             try:
-                _utils.imread_with_pause(resource_0)
+                _utils.imread_with_pause(resource_0, fsspec_fs=self.fsspec_fs)
             except Exception as exc:
                 raise ValueError(
                     f"Could not read the first resource as an image: {resource_0!r}; "
@@ -806,7 +813,11 @@ class MediaStream(param.Parameterized):
                     f"`streamjoy.wrap_matplotlib` or `streamjoy.wrap_holoviews`."
                 ) from exc
             images = _utils.map_over(
-                self.client, _utils.imread_with_pause, resources, batch_size
+                self.client,
+                _utils.imread_with_pause,
+                resources,
+                batch_size,
+                fsspec_fs=self.fsspec_fs,
             )
         else:
             images = resources
@@ -994,6 +1005,7 @@ class MediaStream(param.Parameterized):
             f"  display: {self.display}\n"
             f"  scratch_dir: {self.scratch_dir}\n"
             f"  in_memory: {self.in_memory}\n"
+            f"  fsspec_fs: {self.fsspec_fs}\n"
         )
 
         if self.intro_title or self.intro_subtitle or self.intro_watermark:

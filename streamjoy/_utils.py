@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+import os
 from collections.abc import Iterable
 from io import BytesIO
 from itertools import islice
@@ -134,7 +135,7 @@ def download_file(
     url_path = Path(url)
     file_name = f"{url_path.parent.parent.name}_{url_path.parent.name}_{url_path.name}"
     uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
-    if isinstance(uri, Path) and uri.exists():
+    if not isinstance(uri, BytesIO) and os.path.exists(uri):
         return uri
 
     response = requests.get(url, stream=True)
@@ -195,13 +196,22 @@ def resolve_uri(
     file_name: str | None = None,
     scratch_dir: str | Path | None = None,
     in_memory: bool = False,
-) -> Path | BytesIO:
+    fsspec_fs: Any | None = None,
+) -> str | Path | BytesIO:
     if in_memory:
         return BytesIO()
 
-    output_dir = Path(get_config_default("scratch_dir", scratch_dir, warn=False))
-    output_dir.mkdir(exist_ok=True, parents=True)
-    uri = output_dir / file_name
+    output_dir = get_config_default("scratch_dir", scratch_dir, warn=False)
+    if fsspec_fs:
+        try:
+            fsspec_fs.mkdir(output_dir, exist_ok=True, parents=True)
+        except FileExistsError:
+            pass
+        uri = os.path.join(output_dir, file_name)
+    else:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(exist_ok=True, parents=True)
+        uri = output_dir / file_name
     return uri
 
 
@@ -292,9 +302,23 @@ def repeat_frame(
 
 
 def imread_with_pause(
-    uri: Any | Paused, extension: str | None = None, plugin: str | None = None
+    uri: Any | Paused,
+    extension: str | None = None,
+    plugin: str | None = None,
+    fsspec_fs: Any | None = None,
 ) -> np.ndarray | Paused:
     imread_kwargs = dict(extension=extension, plugin=plugin)
+    seconds = None
     if isinstance(uri, Paused):
-        return Paused(iio.imread(uri.output, **imread_kwargs).squeeze(), uri.seconds)
-    return iio.imread(uri, **imread_kwargs).squeeze()
+        seconds = uri.seconds
+        uri = uri.output
+    if fsspec_fs:
+        with fsspec_fs.open(uri, "rb") as f:
+            image = iio.imread(f, **imread_kwargs)
+    else:
+        image = iio.imread(uri, **imread_kwargs).squeeze()
+    image = image.squeeze()
+    if seconds is None:
+        return image
+    else:
+        return Paused(output=image, seconds=seconds)

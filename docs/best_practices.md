@@ -180,3 +180,21 @@ from streamjoy import stream
 
 stream(..., threads_per_worker=1)
 ```
+
+## 🖥️ Specify `client` if using a remote cluster
+
+If you're using a remote cluster, specify the `client` argument to use the Dask client.
+
+```python
+from dask.distributed import Client
+
+client = Client()
+stream(..., client=client)
+```
+
+## 🪣 Use `fsspec` to read/write intermediate files on a remote filesystem
+
+```python
+fs = fsspec.filesystem('s3', anon=False)
+stream(..., fsspec_fs=fs, scratch_dir="bucket-name/streamjoy_scratch")
+```
