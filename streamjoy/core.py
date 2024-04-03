@@ -4,6 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Literal
 
+from .serializers import serialize_appropriately
 from .streams import AnyStream, ConnectedStreams, GifStream, Mp4Stream
 
 
@@ -45,19 +46,16 @@ def stream(
     else:
         stream_cls = AnyStream
 
-    resources, renderer, renderer_iterables, renderer_kwargs, kwargs = (
-        stream_cls._expand_from_any(
-            resources, renderer, renderer_iterables, renderer_kwargs or {}, **kwargs
-        )
-    )
-
-    stream = stream_cls(
-        resources=resources,
-        renderer=renderer,
-        renderer_iterables=renderer_iterables,
-        renderer_kwargs=renderer_kwargs,
+    serialized = serialize_appropriately(
+        stream_cls,
+        resources,
+        renderer,
+        renderer_iterables,
+        renderer_kwargs or {},
         **kwargs,
     )
+
+    stream = stream_cls(**serialized.param.values(), **serialized.kwargs)
 
     if uri:
         return stream.write(uri=uri, extension=extension)

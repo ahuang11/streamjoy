@@ -322,3 +322,21 @@ def imread_with_pause(
         return image
     else:
         return Paused(output=image, seconds=seconds)
+
+
+def subset_resources_renderer_iterables(
+    resources: Any, renderer_iterables: list[Any], max_frames: int
+):
+    if len(resources) > max_frames and max_frames != -1:
+        color = config["logging_warning_color"]
+        reset = config["logging_reset_color"]
+        logging.warning(
+            f"There are a total of {len(resources)} frames, "
+            f"but streaming only {color}{max_frames}{reset}. "
+            f"Set max_frames to -1 to stream all frames."
+        )
+    resources = resources[: max_frames or max_frames]
+    renderer_iterables = [
+        iterable[: len(resources)] for iterable in renderer_iterables or []
+    ]
+    return resources, renderer_iterables

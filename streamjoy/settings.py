@@ -42,13 +42,13 @@ config = {
 }
 
 obj_handlers = {
-    "xarray.Dataset": "_expand_from_xarray",
-    "xarray.DataArray": "_expand_from_xarray",
-    "pandas.DataFrame": "_expand_from_pandas",
-    "pandas.Series": "_expand_from_pandas",
-    "holoviews": "_expand_from_holoviews",
-    "polars.DataFrame": "_expand_from_polars",
-    "polars.Series": "_expand_from_polars",
+    "xarray.Dataset": "serialize_xarray",
+    "xarray.DataArray": "serialize_xarray",
+    "pandas.DataFrame": "serialize_pandas",
+    "pandas.Series": "serialize_pandas",
+    "holoviews": "serialize_holoviews",
+    "polars.DataFrame": "serialize_polars",
+    "polars.Series": "serialize_polars",
 }
 
 file_handlers = {
