@@ -128,7 +128,9 @@ def wrap_holoviews(
                 with WebDriver(
                     service=Service(ChromeDriverManager().install()), options=options
                 ) as webdriver:
-                    image = get_screenshot_as_png(hv.render(hv_obj, backend="bokeh"), driver=webdriver)
+                    image = get_screenshot_as_png(
+                        hv.render(hv_obj, backend="bokeh"), driver=webdriver
+                    )
                     if fsspec_fs:
                         with fsspec_fs.open(uri, "wb") as f:
                             image.save(f)
