@@ -108,6 +108,7 @@ def serialize_xarray(
         renderer = wrap_matplotlib(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
+            fsspec_fs=kwargs.get("fsspec_fs"),
         )(default_xarray_renderer)
         ds_0 = resources[0]
         if ds_0.ndim >= 2:
@@ -169,6 +170,7 @@ def serialize_pandas(
         renderer = wrap_matplotlib(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
+            fsspec_fs=kwargs.get("fsspec_fs"),
         )(default_pandas_renderer)
         if "x" not in renderer_kwargs:
             if df.index.name or isinstance(df, pd.Series):
@@ -246,6 +248,7 @@ def serialize_polars(
         renderer = wrap_holoviews(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
+            fsspec_fs=kwargs.get("fsspec_fs"),
         )(default_polars_renderer)
         numeric_cols = [
             col
@@ -341,6 +344,7 @@ def serialize_holoviews(
         renderer = wrap_holoviews(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
+            fsspec_fs=kwargs.get("fsspec_fs"),
         )(default_holoviews_renderer)
         clims = {}
         for hv_el in hv_obj.traverse(full_breadth=False):
