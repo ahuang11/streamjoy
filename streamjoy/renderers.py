@@ -81,11 +81,12 @@ def default_polars_renderer(
     Returns:
         The rendered HoloViews Element.
     """
+    backend = kwargs.pop("backend", None)
     by = kwargs.pop("groupby", None)
     if by:
         kwargs["by"] = by
     hv_obj = df_sub.plot(*args, **kwargs)
-    return default_holoviews_renderer(hv_obj)
+    return default_holoviews_renderer(hv_obj, backend=backend)
 
 
 def default_xarray_renderer(
