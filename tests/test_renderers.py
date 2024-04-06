@@ -23,7 +23,6 @@ class TestDefaultRenderer:
         rendered_obj = default_polars_renderer(
             pl_df, x="Year", y="life", groupby="Country", title=title
         )
-        hv.HoloMap
         assert isinstance(rendered_obj, hv.NdOverlay)
 
     @pytest.mark.parametrize("title", ["Constant", "{time}", None])
