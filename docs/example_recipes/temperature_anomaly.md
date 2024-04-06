@@ -12,7 +12,7 @@ Highlights:
 - Uses a custom `renderer` function to create each frame of the animation.
 - Uses `Paused` to pause the animation at notable dates.
 
-```python
+```python hl_lines="16 17 112"
 import pandas as pd
 import matplotlib.pyplot as plt
 from streamjoy import stream, wrap_matplotlib, Paused

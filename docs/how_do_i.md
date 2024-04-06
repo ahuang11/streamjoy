@@ -1,6 +1,18 @@
-# Best practices
+# How do I...
 
-## ⏸️ Take advantage of `Paused`, `intro_pause`, `ending_pause`
+## 🖼️ Use all resources with `max_frames=-1`
+
+By default, StreamJoy only renders the first 50 frames to prevent accidentally rendering a large dataset.
+
+To render all frames, set `max_frames=-1`.
+
+```python
+from streamjoy import stream
+
+stream(..., max_frames=-1)
+```
+
+## ⏸️ How to pause animations with `Paused`, `intro_pause`, `ending_pause`
 
 Animations can be good, but sometimes you want to pause at various points of the animation to provide context or to emphasize a point.
 
@@ -21,7 +33,7 @@ stream(..., renderer=plot_frame)
 
 Don't forget there's also `intro_pause` and `ending_pause` to pause at the beginning and end of the animation!
 
-## 📊 Decorate custom `renderer` with `wrap_*` decorators
+## 📊 Reduce boilerplate code with `wrap_*` decorators
 
 If you're using a custom `renderer`, you can use `wrap_matplotlib` and `wrap_holoviews` to automatically handle saving and closing the figure.
 
@@ -45,7 +57,7 @@ from streamjoy import stream
 stream(..., intro_title="Himawari Visible", intro_subtitle="10 Hours Loop")
 ```
 
-## 💾 Save to memory for testing purposes
+## 💾 Write animation to memory instead of file
 
 If you're just testing out the animation, you can save it to memory instead of to disk by calling write without specifying a uri.
 
@@ -55,7 +67,9 @@ from streamjoy import stream
 stream(...).write()
 ```
 
-## 🚪 Use accessors for `pandas` and `xarray` objects
+## 🚪 Use as a method of `pandas` and `xarray` objects
+
+StreamJoy can be used directly from `pandas` and `xarray` objects as an accessor.
 
 ```python
 import pandas as pd
@@ -64,10 +78,10 @@ import streamjoy.pandas
 df = pd.DataFrame(...)
 
 # equivalent to streamjoy.stream(df)
-df.stream(...)
+df.streamjoy(...)
 
 # series also works!
-df["col"].stream(...)
+df["col"].streamjoy(...)
 ```
 
 ```python
@@ -77,13 +91,13 @@ import streamjoy.xarray
 ds = xr.Dataset(...)
 
 # equivalent to streamjoy.stream(ds)
-ds.stream(...)
+ds.streamjoy(...)
 
 # dataarray also works!
-ds["var"].stream(...)
+ds["var"].streamjoy(...)
 ```
 
-## ⛓️ Use `sum` to join homogeneous streams and `connect` for hetereogenous
+## ⛓️ Join streams with `sum` and `connect`
 
 Use `sum` to join homogeneous streams, i.e. streams that have the same keyword arguments.
 
@@ -101,13 +115,13 @@ from streamjoy import stream, connect
 connect([stream(..., **kwargs1), stream(..., **kwargs2)])
 ```
 
-## 🎥 When to use `.mp4` vs `.gif`
+## 🎥 Decide between writing as `.mp4` vs `.gif`
 
 If you need a comprehensive color palette, use `.mp4` as it supports more colors.
 
 For automatic playing and looping, use `.gif`. To reduce the file size of the `.gif`, set `optimize=True`, which uses `pygifsicle` to reduce the file size.
 
-## 📦 Wrap `streamjoy` functionality under `__name__ == "__main__"`
+## 📦 Prevent `RuntimeError` by using `__name__ == "__main__"`
 
 If you run a `.py` script without it, you might encounter the following `RuntimeError`:
 
@@ -128,9 +142,16 @@ The "freeze_support()" line can be omitted if the program
 is not going to be frozen to produce an executable.
 ```
 
+To patch, simply wrap your `stream` call in `if __name__ == "__main__":`.
+
+```python
+if __name__ == "__main__":
+    stream(...)
+```
+
 It's fine without it in notebooks though.
 
-## ⚙️ Change the default `config` settings
+## ⚙️ Set your own default settings with `config`
 
 StreamJoy uses a simple `config` dict to store settings. You can change the default settings by modifying the `streamjoy.config` object.
 
@@ -155,7 +176,7 @@ import streamjoy
 streamjoy.config = {"max_frames": -1}
 ```
 
-## 🔧 Explicitly set keyword arguments
+## 🔧 Use custom values instead of the defaults
 
 Much of StreamJoy is based on sensible defaults to get you started quickly, but you should override them.
 
@@ -167,11 +188,11 @@ StreamJoy will warn you on some settings if you don't override them:
 No 'max_frames' specified; using the default 50 / 100 frames. Pass `-1` to use all frames. Suppress this by passing 'max_frames'.
 ```
 
-## 🧩 Use `processes=False` for rendering HoloViews objects
+## 🧩 Render HoloViews objects with `processes=False`
 
 This is done automatically! However, in case there's an edge case, note that the kdims/vdims don't seem to carry over properly to the subprocesses when rendering HoloViews objects. It might complain that it can't find the desired dimensions.
 
-## 📚 Use `threads_per_worker` if flickering
+## 📚 Prevent flickering by setting `threads_per_worker`
 
 Matplotlib is not always thread-safe, so if you're seeing flickering, set `threads_per_worker=1`.
 
@@ -181,7 +202,7 @@ from streamjoy import stream
 stream(..., threads_per_worker=1)
 ```
 
-## 🖥️ Specify `client` if using a remote cluster
+## 🖥️ Provide `client` if using a remote cluster
 
 If you're using a remote cluster, specify the `client` argument to use the Dask client.
 
@@ -192,7 +213,7 @@ client = Client()
 stream(..., client=client)
 ```
 
-## 🪣 Use `fsspec` to read/write intermediate files on a remote filesystem
+## 🪣 Read & write files on a remote filesystem with `fsspec_fs`
 
 ```python
 fs = fsspec.filesystem('s3', anon=False)

@@ -75,7 +75,6 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "param",
-    "bokeh",
     "dask[distributed]",
     "imageio[pyav]>=2.34.0",
     "pygifsicle==1.0.5",

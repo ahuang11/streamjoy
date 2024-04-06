@@ -13,7 +13,7 @@ Highlights:
 - Uses the built-in `default_xarray_renderer` under the hood
 - Uses `renderer_kwargs` to pass keyword arguments to the underlying `ds.plot` method.
 
-```python
+```python hl_lines="19 32"
 import cartopy.crs as ccrs
 from streamjoy import stream
 

@@ -14,7 +14,7 @@ Highlights:
 - Uses `wrap_matplotlib` to automatically handle saving and closing the figure.
 - Uses a custom `renderer` function to create each frame of the animation.
 
-```python
+```python hl_lines="45 46"
 import numpy as np
 import matplotlib.pyplot as plt
 from numba import njit

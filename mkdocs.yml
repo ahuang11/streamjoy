@@ -42,9 +42,17 @@ markdown_extensions:
         anchor_linenums: true
     - pymdownx.tasklist:
         custom_checkbox: true
+    - admonition
+    - pymdownx.details
+    - pymdownx.tabbed
+    - pymdownx.magiclink
     - pymdownx.inlinehilite
     - pymdownx.snippets
-    - pymdownx.superfences
+    - pymdownx.superfences:
+        custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 plugins:
     - search
@@ -62,7 +70,7 @@ watch:
 nav:
     - Read me!: index.md
     - Supported formats: supported_formats.md
-    - Best practices: best_practices.md
+    - How do I...: how_do_i.md
     - Package design: package_design.md
     - Example recipes:
         - Air temperature: example_recipes/air_temperature.md

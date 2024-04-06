@@ -14,7 +14,7 @@ Highlights:
 - Updates `fps` to 30 to create a smoother animation.
 - Uses `connect` to concatenate the two heterogeneous streams (different keyword arguments with different titles) together.
 
-```python
+```python hl_lines="21-23 31 34"
 import pandas as pd
 from streamjoy import stream, connect
 

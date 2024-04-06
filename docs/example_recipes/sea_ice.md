@@ -13,7 +13,7 @@ Highlights:
 - Uses `pattern` to filter for only the sea ice concentration images.
 - Uses `intro_title` and `intro_subtitle` to provide context at the beginning of the animation.
 
-```python
+```python hl_lines="3 6-9"
 from streamjoy import stream, connect
 
 connect(

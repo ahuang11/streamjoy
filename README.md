@@ -122,11 +122,12 @@ Connect multiple streams together to provide further context.
 ```python
 from streamjoy import stream, connect
 
+URL_FMTS = {
+    "visible": "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif",
+    "infrared": "https://www.goes.noaa.gov/dimg/jma/fd/rbtop/{i}.gif",
+}
+
 if __name__ == "__main__":
-    URL_FMTS = {
-        "visible": "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif",
-        "infrared": "https://www.goes.noaa.gov/dimg/jma/fd/rbtop/{i}.gif",
-    }
     visible_stream = stream(
         [URL_FMTS["visible"].format(i=i) for i in range(1, 11)],
         intro_title="Himawari Visible",
@@ -145,6 +146,12 @@ if __name__ == "__main__":
 ### 📷 Render datasets
 
 You can also render images directly from datasets, either through a custom renderer or a built-in one, and they'll also run in parallel!
+
+The following example requires xarray, cartopy, matplotlib, and netcdf4.
+
+```bash
+pip install xarray cartopy matplotlib netcdf4
+```
 
 ```python
 import numpy as np
