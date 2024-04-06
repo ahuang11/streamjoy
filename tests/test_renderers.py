@@ -1,7 +1,6 @@
-import pytest
-import polars as pl
 import holoviews as hv
 import matplotlib.pyplot as plt
+import pytest
 
 from streamjoy.renderers import (
     default_holoviews_renderer,
@@ -24,6 +23,7 @@ class TestDefaultRenderer:
         rendered_obj = default_polars_renderer(
             pl_df, x="Year", y="life", groupby="Country", title=title
         )
+        hv.HoloMap
         assert isinstance(rendered_obj, hv.NdOverlay)
 
     @pytest.mark.parametrize("title", ["Constant", "{time}", None])
