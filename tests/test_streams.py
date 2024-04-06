@@ -12,6 +12,7 @@ class AbstractTestMediaStream:
         buf = sj.write()
         props = improps(buf)
         props.n_images == 3
+        return props
 
     def test_from_pandas(self, stream_cls, df):
         sj = stream_cls.from_pandas(df)
@@ -53,6 +54,20 @@ class AbstractTestMediaStream:
     def test_fsspec_fs(self, stream_cls, df, fsspec_fs):
         sj = stream_cls.from_pandas(df, fsspec_fs=fsspec_fs)
         self._assert_stream_and_props(sj, stream_cls)
+
+    def test_holoviews_matplotlib_backend(self, stream_cls, ds):
+        sj = stream_cls.from_holoviews(
+            ds.hvplot("lon", "lat", fig_size=200, backend="matplotlib")
+        )
+        props = self._assert_stream_and_props(sj, stream_cls)
+        assert props.shape[1] == 300
+
+    def test_holoviews_bokeh_backend(self, stream_cls, ds):
+        sj = stream_cls.from_holoviews(
+            ds.hvplot("lon", "lat", width=300, backend="bokeh")
+        )
+        props = self._assert_stream_and_props(sj, stream_cls)
+        assert props.shape[1] == 300
 
 
 class TestGifStream(AbstractTestMediaStream):

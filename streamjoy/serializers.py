@@ -305,8 +305,7 @@ def serialize_holoviews(
     """
     import holoviews as hv
 
-    backend = hv.Store.current_backend
-    hv.extension(backend)
+    backend = kwargs.get("backend", hv.Store.current_backend)
 
     def _select_element(hv_obj, key):
         try:
@@ -357,6 +356,7 @@ def serialize_holoviews(
                     array = hv_el.dimension_values(vdim)
                     clim = (np.nanmin(array), np.nanmax(array))
                     clims[vdim] = clim
+
         renderer_kwargs.update(
             backend=backend,
             clims=clims,

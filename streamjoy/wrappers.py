@@ -99,9 +99,7 @@ def wrap_holoviews(
         def wrapped(*args, **kwargs) -> Path | BytesIO:
             import holoviews as hv
 
-            backend = kwargs.get("backend", "bokeh")
-            hv.extension(backend)
-
+            backend = kwargs.get("backend", hv.Store.current_backend)
             output = renderer(*args, **kwargs)
 
             hv_obj = output
@@ -117,7 +115,7 @@ def wrap_holoviews(
                 fsspec_fs=fsspec_fs,
             )
             if backend == "bokeh":
-                from bokeh.io.export import export_png
+                from bokeh.io.export import get_screenshot_as_png
                 from selenium.webdriver.chrome.options import Options
                 from selenium.webdriver.chrome.webdriver import Service, WebDriver
                 from webdriver_manager.chrome import ChromeDriverManager
@@ -128,11 +126,14 @@ def wrap_holoviews(
                 with WebDriver(
                     service=Service(ChromeDriverManager().install()), options=options
                 ) as webdriver:
-                    export_png(
-                        hv.render(hv_obj, backend="bokeh"),
-                        filename=uri,
-                        webdriver=webdriver,
+                    image = get_screenshot_as_png(
+                        hv.render(hv_obj, backend=backend), driver=webdriver
                     )
+                    if fsspec_fs:
+                        with fsspec_fs.open(uri, "wb") as f:
+                            image.save(f)
+                    else:
+                        image.save(uri)
             else:
                 if fsspec_fs:
                     with fsspec_fs.open(uri, "wb") as f:
@@ -141,7 +142,7 @@ def wrap_holoviews(
                         buf.seek(0)
                         f.write(buf.read())
                 else:
-                    hv.save(hv_obj, uri, fmt="png")
+                    hv.save(hv_obj, uri, fmt="png", backend=backend)
 
             return (
                 uri if not return_paused else Paused(output=uri, seconds=output.seconds)

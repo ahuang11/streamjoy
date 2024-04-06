@@ -81,11 +81,12 @@ def default_polars_renderer(
     Returns:
         The rendered HoloViews Element.
     """
+    backend = kwargs.pop("backend", None)
     by = kwargs.pop("groupby", None)
     if by:
         kwargs["by"] = by
     hv_obj = df_sub.plot(*args, **kwargs)
-    return default_holoviews_renderer(hv_obj)
+    return default_holoviews_renderer(hv_obj, backend=backend)
 
 
 def default_xarray_renderer(
@@ -131,8 +132,7 @@ def default_holoviews_renderer(
     """
     import holoviews as hv
 
-    backend = kwargs.get("backend", "bokeh")
-    hv.extension(backend)
+    backend = kwargs.get("backend", hv.Store.current_backend)
 
     clims = kwargs.pop("clims", {})
     for hv_el in hv_obj.traverse(full_breadth=False):
@@ -141,10 +141,12 @@ def default_holoviews_renderer(
         except IndexError:
             continue
         if vdim in clims:
-            hv_el.opts(clim=clims[vdim])
+            hv_el.opts(clim=clims[vdim], backend=backend)
 
     if backend == "bokeh":
         kwargs["toolbar"] = None
+    elif backend == "matplotlib":
+        kwargs["cbar_extend"] = kwargs.get("cbar_extend", "both")
     hv_obj.opts(**kwargs)
 
     return hv_obj
