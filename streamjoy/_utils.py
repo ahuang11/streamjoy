@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+from contextlib import contextmanager
 from collections.abc import Iterable
 from io import BytesIO
 from itertools import islice
@@ -21,6 +22,11 @@ if TYPE_CHECKING:
         import xarray as xr
     except ImportError:
         xr = None
+
+    try:
+        from selenium.webdriver.remote.webdriver import BaseWebDriver
+    except ImportError:
+        BaseWebDriver = None
 
 
 def update_logger(
@@ -332,3 +338,43 @@ def subset_resources_renderer_iterables(
         iterable[: len(resources)] for iterable in renderer_iterables or []
     ]
     return resources, renderer_iterables
+
+
+def get_webdriver(webdriver: str | Callable | None) -> "BaseWebDriver":
+    if webdriver is None:
+        webdriver = get_config_default("webdriver", None, warn=False)
+
+    if isinstance(webdriver, Callable):
+        driver = webdriver()
+
+    elif webdriver.lower() == "chrome":
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.webdriver import Service, WebDriver
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-extensions")
+        driver = WebDriver(
+            service=Service(ChromeDriverManager().install()), options=options
+        )
+
+    elif webdriver.lower() == "firefox":
+        from selenium.webdriver.firefox.options import Options
+        from selenium.webdriver.firefox.webdriver import Service, WebDriver
+        from webdriver_manager.firefox import GeckoDriverManager
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-extensions")
+        driver = WebDriver(
+            service=Service(GeckoDriverManager().install()), options=options
+        )
+
+    else:
+        raise NotImplementedError(
+            f"Webdriver {webdriver} not supported; "
+            f"use 'chrome' or 'firefox', or pass a custom callable."
+        )
+
+    return driver

@@ -215,7 +215,37 @@ stream(..., client=client)
 
 ## 🪣 Read & write files on a remote filesystem with `fsspec_fs`
 
+To read and write files on a remote filesystem, use `fsspec_fs` to specify the filesystem.
+
+A scratch directory must be provided; be sure to prefix the bucket name.
+
 ```python
 fs = fsspec.filesystem('s3', anon=False)
 stream(..., fsspec_fs=fs, scratch_dir="bucket-name/streamjoy_scratch")
+```
+
+## 🚗 Use a custom webdriver to render HoloViews
+
+By default, StreamJoy uses Firefox as the default headless webdriver to render HoloViews objects into images.
+
+If you want to use Chrome instead, you can pass `webdriver="chrome"`.
+
+If you want to use a different webdriver, you can pass a custom function to `webdriver`.
+
+```python
+def get_webdriver():
+    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.firefox.webdriver import Service, WebDriver
+    from webdriver_manager.firefox import GeckoDriverManager
+
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-extensions")
+    executable_path = GeckoDriverManager().install()
+    driver = WebDriver(
+        service=Service(executable_path), options=options
+    )
+    return driver
+
+stream(..., webdriver=get_webdriver)
 ```

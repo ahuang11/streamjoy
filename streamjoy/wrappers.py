@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -79,6 +80,7 @@ def wrap_holoviews(
     in_memory: bool = False,
     scratch_dir: str | Path | None = None,
     fsspec_fs: Any | None = None,
+    webdriver: str | Callable | None = None,
 ) -> Callable:
     """
     Wraps a function used to render a holoviews object so that
@@ -87,6 +89,7 @@ def wrap_holoviews(
     Args:
         in_memory: Whether to render the object in-memory.
         scratch_dir: The scratch directory to use.
+        fsspec_fs: The fsspec filesystem to use.
 
     Returns:
         The wrapped function.
@@ -114,20 +117,12 @@ def wrap_holoviews(
                 in_memory=in_memory,
                 fsspec_fs=fsspec_fs,
             )
+            uri_dir = os.path.dirname(uri)
             if backend == "bokeh":
                 from bokeh.io.export import get_screenshot_as_png
-                from selenium.webdriver.chrome.options import Options
-                from selenium.webdriver.chrome.webdriver import Service, WebDriver
-                from webdriver_manager.chrome import ChromeDriverManager
-
-                options = Options()
-                options.add_argument("--headless")
-                options.add_argument("--disable-extensions")
-                with WebDriver(
-                    service=Service(ChromeDriverManager().install()), options=options
-                ) as webdriver:
+                with _utils.get_webdriver(webdriver) as driver:
                     image = get_screenshot_as_png(
-                        hv.render(hv_obj, backend=backend), driver=webdriver
+                        hv.render(hv_obj, backend=backend), driver=driver
                     )
                     if fsspec_fs:
                         with fsspec_fs.open(uri, "wb") as f:

@@ -14,6 +14,8 @@ config = {
     "max_files": 2,
     # matplotlib
     "max_open_warning": 100,
+    # holoviews
+    "webdriver": "firefox",
     # output
     "in_memory": False,
     "scratch_dir": "streamjoy_scratch",
