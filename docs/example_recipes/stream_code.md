@@ -9,7 +9,7 @@ Highlights:
 - Uses a custom `renderer` function to create each frame of the animation.
 - Propagates `formatter`, `max_line_length`, and `max_line_number` to the custom `renderer` function.
 
-```python
+```python hl_lines="51 102-104"
 from textwrap import dedent
 
 import numpy as np

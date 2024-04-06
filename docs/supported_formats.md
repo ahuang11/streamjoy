@@ -29,7 +29,7 @@ stream(URL_DIR, uri="air_temperature.mp4", pattern="air.sig995.194*.nc")
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/93cb0c1b-46d3-48e6-be2c-e3b1487f9117" type="video/mp4">
 </video>
 
-## 🧮 Numpy Array
+## 🧮 Numpy NdArray
 
 ```python
 from streamjoy import stream
@@ -44,6 +44,14 @@ stream(array, max_frames=-1).write("newtonscradle.mp4")
 </video>
 
 ## 🐼 Pandas DataFrame or Series
+
+!!! note "Additional Requirements"
+
+    You will need to additionally install `pandas` and `matplotlib` to support this format:
+
+    ```bash
+    pip install pandas matplotlib
+    ```
 
 ```python
 from streamjoy import stream
@@ -61,6 +69,15 @@ stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 </video>
 
 ## 🐻‍❄️ Polars DataFrame
+
+!!! note "Additional Requirements"
+
+    You will need to additionally install `polars`, `pyarrow`, `hvplot`, `selenium`, and `webdriver-manager` to support this format:
+
+    ```bash
+    pip install polars pyarrow hvplot selenium webdriver-manager
+    ```
+
 ```python
 from streamjoy import stream
 import polars as pl
@@ -68,12 +85,29 @@ import polars as pl
 df = pl.read_csv(
     "https://raw.githubusercontent.com/franlopezguzman/gapminder-with-bokeh/master/gapminder_tidy.csv"
 )
-df = df.query("Country in ['United States', 'China', 'South Africa']")
+df = df.filter(pl.col("Country").is_in(['United States', 'China', 'South Africa']))
 stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 ```
 
+<video controls="true" allowfullscreen="true">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/fb07014c-8c63-46da-9ca0-1592e4649ccd" type="video/mp4">
+</video>
 
 ## 🗄️ XArray Dataset or DataArray
+
+!!! note "Additional Requirements"
+
+    You will need to additionally install `xarray` and `matplotlib` to support this format:
+
+    ```bash
+    pip install xarray matplotlib
+    ```
+
+    For this example, you will also need to install `pooch` and `netcdf4`:
+
+    ```bash
+    pip install pooch netcdf4
+    ```
 
 ```python
 from streamjoy import stream
@@ -88,6 +122,32 @@ stream(ds, uri="air.mp4", cmap="RdBu_r")
 </video>
 
 ## 📊 HoloViews HoloMap or DynamicMap
+
+!!! note "Additional Requirements"
+
+    You will need to additionally install `holoviews` to support this format:
+
+    ```bash
+    pip install holoviews
+    ```
+
+    For the bokeh backend, you will need to install `bokeh`, `selenium`, and `webdriver-manager`:
+
+    ```bash
+    pip install bokeh selenium webdriver-manager
+    ```
+
+    For the matplotlib backend, you will need to install `matplotlib`:
+
+    ```bash
+    pip install matplotlib
+    ```
+
+    For this example, you will also need to install `pooch`, `netcdf4, `hvplot`, and `xarray`:
+
+    ```bash
+    pip install pooch netcdf4 hvplot xarray
+    ```
 
 ```python
 import xarray as xr

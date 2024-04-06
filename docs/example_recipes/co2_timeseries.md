@@ -14,7 +14,7 @@ Highlights:
 - Uses a custom `renderer` function to create each frame of the animation.
 - Uses `Paused` to pause the animation at notable dates.
 
-```python
+```python hl_lines="4 19 114"
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator

@@ -9,7 +9,7 @@ Highlights:
 - Uses `wrap_matplotlib` to automatically handle saving and closing the figure.
 - Uses a custom `renderer` function to create each frame of the animation.
 
-```python
+```python hl_lines="5-6 14"
 import matplotlib.pyplot as plt
 import numpy as np
 from streamjoy import stream, wrap_matplotlib

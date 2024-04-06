@@ -11,7 +11,7 @@ Highlights:
 - Imports `streamjoy.xarray` to use the `stream` accessor.
 - Passes the `uri` to `stream` as the first argument to save the animation to disk.
 
-```python
+```python hl_lines="2 5"
 import xarray as xr
 import streamjoy.xarray
 
