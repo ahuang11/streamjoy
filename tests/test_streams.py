@@ -75,6 +75,7 @@ class AbstractTestMediaStream:
         props = improps(buf)
         assert props.n_images == 2
 
+
 class TestGifStream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")
     def stream_cls(self):
