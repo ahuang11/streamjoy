@@ -538,6 +538,11 @@ class MediaStream(param.Parameterized):
         if resources is None:
             resources = self.resources
             renderer_iterables = self.renderer_iterables
+            max_frames = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
+            kwargs["max_frames"] = max_frames
+            resources, renderer_iterables = _utils.subset_resources_renderer_iterables(
+                resources, renderer_iterables, max_frames
+            )
         else:
             serialized = serialize_appropriately(
                 self, resources, renderer, renderer_kwargs, **kwargs

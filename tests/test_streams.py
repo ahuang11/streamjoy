@@ -69,6 +69,11 @@ class AbstractTestMediaStream:
         props = self._assert_stream_and_props(sj, stream_cls)
         assert props.shape[1] == 300
 
+    def test_write_max_frames(self, stream_cls, df):
+        sj = stream_cls.from_pandas(df, max_frames=3)
+        buf = sj.write(max_frames=2)
+        props = improps(buf)
+        assert props.n_images == 2
 
 class TestGifStream(AbstractTestMediaStream):
     @pytest.fixture(scope="class")
