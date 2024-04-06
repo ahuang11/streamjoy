@@ -14,6 +14,10 @@ class AbstractTestMediaStream:
         props.n_images == 3
         return props
 
+    def test_from_numpy(self, stream_cls, array):
+        sj = stream_cls.from_numpy(array)
+        self._assert_stream_and_props(sj, stream_cls)
+
     def test_from_pandas(self, stream_cls, df):
         sj = stream_cls.from_pandas(df)
         self._assert_stream_and_props(sj, stream_cls)
