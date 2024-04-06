@@ -120,6 +120,7 @@ def wrap_holoviews(
             uri_dir = os.path.dirname(uri)
             if backend == "bokeh":
                 from bokeh.io.export import get_screenshot_as_png
+
                 with _utils.get_webdriver(webdriver) as driver:
                     image = get_screenshot_as_png(
                         hv.render(hv_obj, backend=backend), driver=driver

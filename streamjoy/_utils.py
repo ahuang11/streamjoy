@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-from contextlib import contextmanager
 from collections.abc import Iterable
 from io import BytesIO
 from itertools import islice
@@ -340,7 +339,7 @@ def subset_resources_renderer_iterables(
     return resources, renderer_iterables
 
 
-def get_webdriver(webdriver: str | Callable | None) -> "BaseWebDriver":
+def get_webdriver(webdriver: str | Callable | None) -> BaseWebDriver:
     if webdriver is None:
         webdriver = get_config_default("webdriver", None, warn=False)
 
