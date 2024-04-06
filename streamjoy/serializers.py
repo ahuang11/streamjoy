@@ -259,8 +259,8 @@ def serialize_polars(
     groupby = kwargs.get("groupby")
 
     if groupby:
-        group_sizes = resources.groupby(groupby).agg(pl.len()).sort(by="count")
-        total_frames = group_sizes.select(pl.col("count").max()).to_numpy()[0, 0]
+        group_sizes = resources.groupby(groupby).agg(pl.len())
+        total_frames = group_sizes.select(pl.col("len").max()).to_numpy()[0, 0]
     else:
         total_frames = len(resources)
 
