@@ -364,9 +364,7 @@ def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
         options.add_argument("--headless")
         options.add_argument("--disable-extensions")
         webdriver_path = webdriver_path or get_webdriver_path("chrome")
-        driver = WebDriver(
-            service=Service(webdriver_path), options=options
-        )
+        driver = WebDriver(service=Service(webdriver_path), options=options)
 
     elif webdriver_key.lower() == "firefox":
         from selenium.webdriver.firefox.options import Options
@@ -376,9 +374,7 @@ def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
         options.add_argument("--headless")
         options.add_argument("--disable-extensions")
         webdriver_path = webdriver_path or get_webdriver_path("firefox")
-        driver = WebDriver(
-            service=Service(webdriver_path), options=options
-        )
+        driver = WebDriver(service=Service(webdriver_path), options=options)
 
     else:
         raise NotImplementedError(
