@@ -131,6 +131,7 @@ def default_holoviews_renderer(
         The rendered HoloViews Element.
     """
     import holoviews as hv
+
     backend = kwargs.get("backend", hv.Store.current_backend)
 
     clims = kwargs.pop("clims", {})

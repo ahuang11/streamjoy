@@ -331,10 +331,7 @@ def serialize_holoviews(
     if len(kdims) > 1:
         raise ValueError("Can only handle 1D HoloViews objects.")
 
-    resources = [
-        _select_element(hv_obj, key).opts(title=str(key))
-        for key in keys
-    ]
+    resources = [_select_element(hv_obj, key).opts(title=str(key)) for key in keys]
 
     renderer_kwargs = renderer_kwargs or {}
     renderer_kwargs.update(_utils.pop_from_cls(stream_cls, kwargs))
