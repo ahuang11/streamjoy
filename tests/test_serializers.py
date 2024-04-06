@@ -12,9 +12,9 @@ class TestSerializeNumpy:
     def test_serialize_numpy(self, array):
         serialized = serialize_numpy(None, array)
         assert isinstance(serialized, Serialized)
-        assert len(serialized.resources) == 3
+        assert len(serialized.resources) == 36
         assert isinstance(serialized.resources, list)
-        assert callable(serialized.renderer)
+        assert not serialized.renderer
         assert serialized.renderer_iterables is None
         assert isinstance(serialized.renderer_kwargs, dict)
         assert isinstance(serialized.kwargs, dict)
