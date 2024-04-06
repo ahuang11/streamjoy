@@ -138,7 +138,6 @@ def serialize_xarray(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
             fsspec_fs=kwargs.get("fsspec_fs"),
-            webdriver=renderer_kwargs.pop("webdriver", None),
         )(default_xarray_renderer)
         ds_0 = resources[0]
         if ds_0.ndim >= 2:
