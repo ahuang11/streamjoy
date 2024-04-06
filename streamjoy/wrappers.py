@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -117,7 +116,6 @@ def wrap_holoviews(
                 in_memory=in_memory,
                 fsspec_fs=fsspec_fs,
             )
-            uri_dir = os.path.dirname(uri)
             if backend == "bokeh":
                 from bokeh.io.export import get_screenshot_as_png
 
