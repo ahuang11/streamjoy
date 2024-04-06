@@ -48,18 +48,18 @@ def _select_obj_handler(resources: Any) -> MediaStream:
     if isinstance(resources, (Path, str)):
         return serialize_paths
 
+    resources_type = type(resources)
+    module = getattr(resources_type, "__module__").split(".", maxsplit=1)[0]
+    type_ = resources_type.__name__
     for class_or_package_name, function_name in obj_handlers.items():
-        module = getattr(resources, "__module__", "").split(".", maxsplit=1)[0]
-        type_ = type(resources).__name__
         if (
             f"{module}.{type_}" == class_or_package_name
             or module == class_or_package_name
-            or type_ == class_or_package_name
         ):
             return globals()[function_name]
 
     raise ValueError(
-        f"Could not find a method to handle {type(resources)}; "
+        f"Could not find a method to handle {resources_type}; "
         f"supported classes/packages are {list(obj_handlers.keys())}."
     )
 

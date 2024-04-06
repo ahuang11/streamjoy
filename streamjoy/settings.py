@@ -48,8 +48,7 @@ obj_handlers = {
     "pandas.Series": "serialize_pandas",
     "holoviews": "serialize_holoviews",
     "polars.DataFrame": "serialize_polars",
-    "numpy": "serialize_numpy",
-    "ndarray": "serialize_numpy",
+    "numpy.ndarray": "serialize_numpy",
 }
 
 file_handlers = {
