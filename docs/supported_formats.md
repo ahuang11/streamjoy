@@ -78,6 +78,12 @@ stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
     pip install polars pyarrow hvplot selenium webdriver-manager
     ```
 
+    You must also have `firefox` or `chromedriver` installed on your system.
+
+    ```bash
+    conda install -c conda-forge firefox
+    ```
+
 ```python
 from streamjoy import stream
 import polars as pl
@@ -90,7 +96,7 @@ stream(df, uri="gapminder.mp4", groupby="Country", title="{Year}")
 ```
 
 <video controls="true" allowfullscreen="true">
-<source src="https://github.com/ahuang11/streamjoy/assets/15331990/fb07014c-8c63-46da-9ca0-1592e4649ccd" type="video/mp4">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/75531331-3974-46b8-8399-6dd14ad31f5c" type="video/mp4">
 </video>
 
 ## 🗄️ XArray Dataset or DataArray
@@ -147,6 +153,12 @@ stream(ds, uri="air.mp4", cmap="RdBu_r")
 
     ```bash
     pip install pooch netcdf4 hvplot xarray
+    ```
+
+    You must also have `firefox` or `chromedriver` installed on your system.
+
+    ```bash
+    conda install -c conda-forge firefox
     ```
 
 ```python

@@ -8,8 +8,7 @@ theme:
     name: material
     features:
         - content.code.copy
-    icon:
-        logo: material/library
+    logo: assets/logo.png
     palette:
         # Palette toggle for automatic mode
         - media: "(prefers-color-scheme)"
