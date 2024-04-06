@@ -197,6 +197,25 @@ class MediaStream(param.Parameterized):
         super().__init__(**params)
 
     @classmethod
+    def from_numpy(
+        cls,
+        array: np.ndarray,
+        renderer: Callable | None = None,
+        renderer_iterables: list[Any] | None = None,
+        renderer_kwargs: dict | None = None,
+        **kwargs,
+    ) -> MediaStream:
+        serialized = serialize_appropriately(
+            cls,
+            resources=array,
+            renderer=renderer,
+            renderer_iterables=renderer_iterables,
+            renderer_kwargs=renderer_kwargs,
+            **kwargs,
+        )
+        return cls(**serialized.param.values(), **serialized.kwargs)
+
+    @classmethod
     def from_xarray(
         cls,
         ds: xr.Dataset | xr.DataArray,
@@ -538,7 +557,9 @@ class MediaStream(param.Parameterized):
         if resources is None:
             resources = self.resources
             renderer_iterables = self.renderer_iterables
-            max_frames = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
+            max_frames = _utils.get_max_frames(
+                len(resources), kwargs.get("max_frames", self.max_frames)
+            )
             kwargs["max_frames"] = max_frames
             resources, renderer_iterables = _utils.subset_resources_renderer_iterables(
                 resources, renderer_iterables, max_frames

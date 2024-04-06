@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import hvplot.xarray  # noqa: F401
+import imageio.v3 as iio
 import pandas as pd
 import polars as pl
 import pytest
@@ -14,6 +15,11 @@ NC_PATH = DATA_DIR / "air.nc"
 ZARR_PATH = DATA_DIR / "air.zarr"
 CSV_PATH = DATA_DIR / "gapminder.csv"
 PARQUET_PATH = DATA_DIR / "gapminder.parquet"
+
+
+@pytest.fixture
+def array():
+    return iio.imread("imageio:newtonscradle.gif")
 
 
 @pytest.fixture

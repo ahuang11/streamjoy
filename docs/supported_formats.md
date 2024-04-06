@@ -2,7 +2,7 @@
 
 StreamJoy supports a variety of input types!
 
-## 📋 List of Images or URLs
+## 📋 List of Images, GIFs, Videos, or URLs
 
 ```python
 from streamjoy import stream
@@ -15,7 +15,7 @@ stream([URL_FMT.format(day=day) for day in range(1, 31)], uri="2024_jan_sea_ice.
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/7c933cd4-aa15-461a-af79-f508d9d76aa5" type="video/mp4">
 </video>
 
-## 📁 Directory of Images or URLs
+## 📁 Directory of Images, GIFs, Videos, or URLs
 
 ```python
 from streamjoy import stream
@@ -27,6 +27,20 @@ stream(URL_DIR, uri="air_temperature.mp4", pattern="air.sig995.194*.nc")
 
 <video controls="true" allowfullscreen="true">
 <source src="https://github.com/ahuang11/streamjoy/assets/15331990/93cb0c1b-46d3-48e6-be2c-e3b1487f9117" type="video/mp4">
+</video>
+
+## 🧮 Numpy Array
+
+```python
+from streamjoy import stream
+import imageio.v3 as iio
+
+array = iio.imread("imageio:newtonscradle.gif")  # is a 4D numpy array
+stream(array, max_frames=-1).write("newtonscradle.mp4")
+```
+
+<video controls="true" allowfullscreen="true">
+<source src="https://github.com/ahuang11/streamjoy/assets/15331990/7687e951-654c-4719-b50a-4aabc0ddf2e4" type="video/mp4">
 </video>
 
 ## 🐼 Pandas DataFrame or Series

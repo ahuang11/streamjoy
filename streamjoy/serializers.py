@@ -48,9 +48,10 @@ def _select_obj_handler(resources: Any) -> MediaStream:
     if isinstance(resources, (Path, str)):
         return serialize_paths
 
+    resources_type = type(resources)
+    module = getattr(resources_type, "__module__").split(".", maxsplit=1)[0]
+    type_ = resources_type.__name__
     for class_or_package_name, function_name in obj_handlers.items():
-        module = getattr(resources, "__module__", "").split(".", maxsplit=1)[0]
-        type_ = type(resources).__name__
         if (
             f"{module}.{type_}" == class_or_package_name
             or module == class_or_package_name
@@ -58,9 +59,37 @@ def _select_obj_handler(resources: Any) -> MediaStream:
             return globals()[function_name]
 
     raise ValueError(
-        f"Could not find a method to handle {type(resources)}; "
+        f"Could not find a method to handle {resources_type}; "
         f"supported classes/packages are {list(obj_handlers.keys())}."
     )
+
+
+def serialize_numpy(
+    stream_cls,
+    resources: np.ndarray,
+    renderer: Callable | None = None,
+    renderer_iterables: list[Any] | None = None,
+    renderer_kwargs: dict | None = None,
+    **kwargs,
+) -> Serialized:
+    """
+    Serialize numpy arrays for streaming or rendering.
+
+    Args:
+        stream_cls: The class reference used for logging and utility functions.
+        resources: The numpy array to be serialized.
+        renderer: The rendering function to use on the array.
+        renderer_iterables: Additional iterable arguments to pass to the renderer.
+        renderer_kwargs: Additional keyword arguments to pass to the renderer.
+        **kwargs: Additional keyword arguments, including 'dim' and 'var' for xarray selection.
+
+    Returns:
+        A tuple containing the serialized resources, renderer, renderer_iterables, renderer_kwargs, and any additional keyword arguments.
+    """
+    resources = [resource for resource in resources]
+    renderer_kwargs = renderer_kwargs or {}
+    renderer_kwargs.update(_utils.pop_from_cls(stream_cls, kwargs))
+    return Serialized(resources, renderer, renderer_iterables, renderer_kwargs, kwargs)
 
 
 def serialize_xarray(
@@ -230,8 +259,8 @@ def serialize_polars(
     groupby = kwargs.get("groupby")
 
     if groupby:
-        group_sizes = resources.groupby(groupby).agg(pl.count()).sort(by="count")
-        total_frames = group_sizes.select(pl.col("count").max()).to_numpy()[0, 0]
+        group_sizes = resources.groupby(groupby).agg(pl.len())
+        total_frames = group_sizes.select(pl.col("len").max()).to_numpy()[0, 0]
     else:
         total_frames = len(resources)
 
@@ -276,6 +305,12 @@ def serialize_polars(
         if "ylabel" not in renderer_kwargs:
             renderer_kwargs["ylabel"] = renderer_kwargs["y"].title().replace("_", " ")
 
+    if kwargs.get("processes"):
+        logging.warning(
+            "Polars (HoloViews) rendering does not support processes; "
+            "setting processes=False."
+        )
+    kwargs["processes"] = False
     return Serialized(
         resources_expanded, renderer, renderer_iterables, renderer_kwargs, kwargs
     )
