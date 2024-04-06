@@ -50,6 +50,7 @@ def default_pandas_renderer(
     df_sub = df_sub.reset_index()
 
     fig, ax = plt.subplots()
+
     title = kwargs.get("title")
     if title:
         title = title.format(**df_sub.iloc[-1])
@@ -83,6 +84,14 @@ def default_polars_renderer(
     """
     backend = kwargs.pop("backend", None)
     by = kwargs.pop("groupby", None)
+
+    title = kwargs.get("title")
+    if title:
+        title = title.format(**df_sub.tail(1).to_pandas().to_dict("records")[0])
+    elif title is None:
+        title = df_sub[kwargs["x"]].tail(1)[0]
+    kwargs["title"] = str(title)
+
     if by:
         kwargs["by"] = by
     hv_obj = df_sub.plot(*args, **kwargs)
@@ -109,10 +118,17 @@ def default_xarray_renderer(
 
     fig = plt.figure()
     ax = plt.axes(**kwargs.pop("subplot_kws", {}))
+    title = kwargs.pop("title", None)
+
     try:
         da_sel.plot(ax=ax, extend="both", *args, **kwargs)
     except Exception:
         da_sel.plot(ax=ax, *args, **kwargs)
+
+    if title:
+        title_format = {coord: da_sel[coord].values for coord in da_sel.coords}
+        ax.set_title(title.format(**title_format))
+
     return fig
 
 
