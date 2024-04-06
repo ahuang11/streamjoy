@@ -99,9 +99,7 @@ def wrap_holoviews(
         def wrapped(*args, **kwargs) -> Path | BytesIO:
             import holoviews as hv
 
-            backend = kwargs.get("backend", "bokeh")
-            hv.extension(backend)
-
+            backend = kwargs.get("backend", hv.Store.current_backend)
             output = renderer(*args, **kwargs)
 
             hv_obj = output
@@ -129,7 +127,7 @@ def wrap_holoviews(
                     service=Service(ChromeDriverManager().install()), options=options
                 ) as webdriver:
                     image = get_screenshot_as_png(
-                        hv.render(hv_obj, backend="bokeh"), driver=webdriver
+                        hv.render(hv_obj, backend=backend), driver=webdriver
                     )
                     if fsspec_fs:
                         with fsspec_fs.open(uri, "wb") as f:
