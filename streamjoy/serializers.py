@@ -278,6 +278,7 @@ def serialize_polars(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
             fsspec_fs=kwargs.get("fsspec_fs"),
+            webdriver=renderer_kwargs.pop("webdriver", None),
         )(default_polars_renderer)
         numeric_cols = [
             col
@@ -379,6 +380,7 @@ def serialize_holoviews(
             in_memory=kwargs.get("in_memory"),
             scratch_dir=kwargs.get("scratch_dir"),
             fsspec_fs=kwargs.get("fsspec_fs"),
+            webdriver=renderer_kwargs.pop("webdriver", None),
         )(default_holoviews_renderer)
         clims = {}
         for hv_el in hv_obj.traverse(full_breadth=False):

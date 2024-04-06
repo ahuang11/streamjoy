@@ -22,6 +22,11 @@ if TYPE_CHECKING:
     except ImportError:
         xr = None
 
+    try:
+        from selenium.webdriver.remote.webdriver import BaseWebDriver
+    except ImportError:
+        BaseWebDriver = None
+
 
 def update_logger(
     level: str | None = None,
@@ -332,3 +337,49 @@ def subset_resources_renderer_iterables(
         iterable[: len(resources)] for iterable in renderer_iterables or []
     ]
     return resources, renderer_iterables
+
+
+def get_webdriver_path(webdriver: str):
+    if webdriver.lower() == "chrome":
+        from webdriver_manager.chrome import ChromeDriverManager
+
+        webdriver_path = ChromeDriverManager().install()
+    elif webdriver.lower() == "firefox":
+        from webdriver_manager.firefox import GeckoDriverManager
+
+        webdriver_path = GeckoDriverManager().install()
+    return webdriver_path
+
+
+def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
+    if isinstance(webdriver, Callable):
+        return webdriver()
+
+    webdriver_key, webdriver_path = webdriver
+    if webdriver_key.lower() == "chrome":
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.webdriver import Service, WebDriver
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-extensions")
+        webdriver_path = webdriver_path or get_webdriver_path("chrome")
+        driver = WebDriver(service=Service(webdriver_path), options=options)
+
+    elif webdriver_key.lower() == "firefox":
+        from selenium.webdriver.firefox.options import Options
+        from selenium.webdriver.firefox.webdriver import Service, WebDriver
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-extensions")
+        webdriver_path = webdriver_path or get_webdriver_path("firefox")
+        driver = WebDriver(service=Service(webdriver_path), options=options)
+
+    else:
+        raise NotImplementedError(
+            f"Webdriver {webdriver_key} not supported; "
+            f"use 'chrome' or 'firefox', or pass a custom callable."
+        )
+
+    return driver
