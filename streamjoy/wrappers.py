@@ -93,6 +93,11 @@ def wrap_holoviews(
     Returns:
         The wrapped function.
     """
+
+    webdriver = _utils.get_config_default("webdriver", webdriver, warn=False)
+    if isinstance(webdriver, str):
+        webdriver = (webdriver, _utils.get_webdriver_path(webdriver))
+
     if in_memory:
         raise ValueError("Holoviews renderer does not support in-memory rendering.")
 

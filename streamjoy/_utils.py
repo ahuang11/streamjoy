@@ -339,40 +339,50 @@ def subset_resources_renderer_iterables(
     return resources, renderer_iterables
 
 
-def get_webdriver(webdriver: str | Callable | None) -> BaseWebDriver:
-    if webdriver is None:
-        webdriver = get_config_default("webdriver", None, warn=False)
-
-    if isinstance(webdriver, Callable):
-        driver = webdriver()
-
-    elif webdriver.lower() == "chrome":
-        from selenium.webdriver.chrome.options import Options
-        from selenium.webdriver.chrome.webdriver import Service, WebDriver
+def get_webdriver_path(webdriver: str):
+    if webdriver.lower() == "chrome":
         from webdriver_manager.chrome import ChromeDriverManager
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-extensions")
-        driver = WebDriver(
-            service=Service(ChromeDriverManager().install()), options=options
-        )
-
+        webdriver_path = ChromeDriverManager().install()
     elif webdriver.lower() == "firefox":
-        from selenium.webdriver.firefox.options import Options
-        from selenium.webdriver.firefox.webdriver import Service, WebDriver
         from webdriver_manager.firefox import GeckoDriverManager
 
+        webdriver_path = GeckoDriverManager().install()
+    return webdriver_path
+
+
+def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
+    if isinstance(webdriver, Callable):
+        return webdriver()
+
+    webdriver_key, webdriver_path = webdriver
+    if webdriver_key.lower() == "chrome":
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.webdriver import Service, WebDriver
+
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-extensions")
+        webdriver_path = webdriver_path or get_webdriver_path("chrome")
         driver = WebDriver(
-            service=Service(GeckoDriverManager().install()), options=options
+            service=Service(webdriver_path), options=options
+        )
+
+    elif webdriver_key.lower() == "firefox":
+        from selenium.webdriver.firefox.options import Options
+        from selenium.webdriver.firefox.webdriver import Service, WebDriver
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-extensions")
+        webdriver_path = webdriver_path or get_webdriver_path("firefox")
+        driver = WebDriver(
+            service=Service(webdriver_path), options=options
         )
 
     else:
         raise NotImplementedError(
-            f"Webdriver {webdriver} not supported; "
+            f"Webdriver {webdriver_key} not supported; "
             f"use 'chrome' or 'firefox', or pass a custom callable."
         )
 
