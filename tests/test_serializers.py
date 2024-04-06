@@ -1,10 +1,10 @@
 from streamjoy.models import Serialized
 from streamjoy.serializers import (
     serialize_holoviews,
+    serialize_numpy,
     serialize_pandas,
     serialize_polars,
     serialize_xarray,
-    serialize_numpy,
 )
 
 

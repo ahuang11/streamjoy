@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import imageio.v3 as iio
 import hvplot.xarray  # noqa: F401
+import imageio.v3 as iio
 import pandas as pd
 import polars as pl
 import pytest
