@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import time
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -80,6 +82,7 @@ def wrap_holoviews(
     scratch_dir: str | Path | None = None,
     fsspec_fs: Any | None = None,
     webdriver: str | Callable | None = None,
+    num_retries: int | None = None,
 ) -> Callable:
     """
     Wraps a function used to render a holoviews object so that
@@ -89,6 +92,8 @@ def wrap_holoviews(
         in_memory: Whether to render the object in-memory.
         scratch_dir: The scratch directory to use.
         fsspec_fs: The fsspec filesystem to use.
+        webdriver: The webdriver to use.
+        num_retries: The number of retries to use.
 
     Returns:
         The wrapped function.
@@ -124,15 +129,29 @@ def wrap_holoviews(
             if backend == "bokeh":
                 from bokeh.io.export import get_screenshot_as_png
 
-                with _utils.get_webdriver(webdriver) as driver:
-                    image = get_screenshot_as_png(
-                        hv.render(hv_obj, backend=backend), driver=driver
-                    )
-                    if fsspec_fs:
-                        with fsspec_fs.open(uri, "wb") as f:
-                            image.save(f)
-                    else:
-                        image.save(uri)
+                retries = _utils.get_config_default(
+                    "num_retries", num_retries, warn=False
+                )
+                for r in range(retries):
+                    try:
+                        driver = _utils.get_webdriver(webdriver)
+                        with driver:
+                            image = get_screenshot_as_png(
+                                hv.render(hv_obj, backend=backend), driver=driver
+                            )
+                        if fsspec_fs:
+                            with fsspec_fs.open(uri, "wb") as f:
+                                image.save(f, format="png")
+                        else:
+                            image.save(uri, format="png")
+                        break
+                    except Exception as e:
+                        logging.warning(
+                            f"Failed to save image: {e}, retrying in {r * 2}s"
+                        )
+                        time.sleep(r * 2)
+                        if r == retries - 1:
+                            raise e
             else:
                 if fsspec_fs:
                     with fsspec_fs.open(uri, "wb") as f:

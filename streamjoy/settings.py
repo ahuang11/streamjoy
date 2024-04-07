@@ -16,6 +16,7 @@ config = {
     "max_open_warning": 100,
     # holoviews
     "webdriver": "firefox",
+    "num_retries": 5,
     # output
     "in_memory": False,
     "scratch_dir": "streamjoy_scratch",
