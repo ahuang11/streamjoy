@@ -442,26 +442,32 @@ def serialize_url(
     file_handler = kwargs.pop("file_handler", None)
     file_handler_kwargs = kwargs.pop("file_handler_kwargs", None)
 
+    max_files = _utils.get_config_default("max_files", max_files, suffix="links")
+
     logging.info(f"Retrieving resources from {base_url!r}.")
-    response = requests.get(resources)
-    content_type = response.headers.get("Content-Type")
 
-    if pattern is not None:
+    with requests.get(resources, stream=True) as response:
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        href = re.compile(pattern.replace("*", ".*"))
-        links = soup.find_all("a", href=href)
-    else:
-        if content_type.startswith("text"):
-            raise ValueError(
-                f"A pattern must be provided if the URL is a directory of files; "
-                f"got {resources!r}."
-            )
-        links = [{"href": ""}]
 
-    max_files = _utils.get_config_default(
-        "max_files", max_files, total_value=len(links), suffix="links"
-    )
+        partial_html = ""
+        content_type = response.headers.get("Content-Type")
+        for chunk in response.iter_content(chunk_size=1024, decode_unicode=True):
+            if chunk:
+                if pattern is not None:
+                    partial_html += chunk
+                    soup = BeautifulSoup(partial_html, "html.parser")
+                    href = re.compile(pattern.replace("*", ".*"))
+                    links = soup.find_all("a", href=href)
+                    if max_files > 0 and len(links) >= max_files:
+                        break
+                else:
+                    if content_type.startswith("text"):
+                        raise ValueError(
+                            f"A pattern must be provided if the URL is a directory of files; "
+                            f"got {resources!r}."
+                        )
+                    links = [{"href": ""}]
+
     if max_files > 0:
         links = links[:max_files]
 

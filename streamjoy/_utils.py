@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 import imageio.v3 as iio
 import numpy as np
+import param
 from dask.distributed import Client, Future, get_client
 
 from .models import Paused
@@ -99,7 +100,7 @@ def get_config_default(
 
 def populate_config_defaults(
     params: dict[str, Any],
-    keys: list[str],
+    keys: param.Parameterized,
     warn_on: list[str] | None = None,
     config_prefix: str = "",
 ):
@@ -131,6 +132,7 @@ def download_file(
     url: str,
     scratch_dir: Path | None = None,
     in_memory: bool = False,
+    parent_depth: int | None = None,
 ) -> str:
     try:
         import requests
@@ -138,7 +140,12 @@ def download_file(
         raise ImportError("To directly read from a URL, `pip install requests`")
 
     url_path = Path(url)
-    file_name = f"{url_path.parent.parent.name}_{url_path.parent.name}_{url_path.name}"
+    file_name = url_path.name
+
+    parent_depth = get_config_default("parent_depth", parent_depth, warn=False)
+    for _ in range(parent_depth):
+        url_path = url_path.parent
+        file_name = f"{url_path.name}_{file_name}"
     uri = resolve_uri(file_name=file_name, scratch_dir=scratch_dir, in_memory=in_memory)
     if not isinstance(uri, BytesIO) and os.path.exists(uri):
         return uri

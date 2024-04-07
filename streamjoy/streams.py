@@ -856,9 +856,6 @@ class GifStream(MediaStream):
         params["loop"] = _utils.get_config_default(
             "loop", params.get("loop"), warn=False
         )
-        params["ending_pause"] = _utils.get_config_default(
-            "ending_pause", params.get("ending_pause"), warn=False
-        )
         super().__init__(**params)
 
     @classmethod
@@ -1017,7 +1014,12 @@ class AnyStream(MediaStream):
         if isinstance(extension, str) and extension not in extension_handlers:
             raise ValueError(f"Unsupported extension: {extension}")
 
-        stream_cls = getattr(locals(), extension_handlers.get(extension), Mp4Stream)
+        stream_cls_str = extension_handlers.get(extension)
+        if stream_cls_str is None:
+            raise ValueError(
+                f"Unsupported extension: {extension}; select from {extension_handlers}"
+            )
+        stream_cls = globals()[stream_cls_str]
         stream = stream_cls(**self.param.values())
         return stream
 
