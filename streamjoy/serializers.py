@@ -446,16 +446,15 @@ def serialize_url(
 
     logging.info(f"Retrieving resources from {base_url!r}.")
 
-    partial_html = ""
     with requests.get(resources, stream=True) as response:
         response.raise_for_status()
 
+        partial_html = ""
         content_type = response.headers.get("Content-Type")
         for chunk in response.iter_content(chunk_size=1024, decode_unicode=True):
             if chunk:
-                partial_html += chunk
-
                 if pattern is not None:
+                    partial_html += chunk
                     soup = BeautifulSoup(partial_html, "html.parser")
                     href = re.compile(pattern.replace("*", ".*"))
                     links = soup.find_all("a", href=href)
