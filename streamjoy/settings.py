@@ -44,6 +44,13 @@ config = {
     "logging_reset_color": "\x1b[0m",
 }
 
+extension_handlers = {
+    None: "AnyStream",
+    ".mp4": "Mp4Stream",
+    ".gif": "GifStream",
+    ".html": "HtmlStream",
+}
+
 obj_handlers = {
     "xarray.Dataset": "serialize_xarray",
     "xarray.DataArray": "serialize_xarray",

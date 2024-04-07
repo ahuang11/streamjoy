@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from .serializers import serialize_appropriately
-from .streams import AnyStream, ConnectedStreams, GifStream, Mp4Stream
-
+from .streams import AnyStream, ConnectedStreams, GifStream, Mp4Stream, HtmlStream
+from .settings import extension_handlers
+from . import streams
 
 def stream(
     resources: Any,
@@ -16,7 +17,7 @@ def stream(
     renderer_kwargs: dict | None = None,
     extension: Literal[".mp4", ".gif"] | None = None,
     **kwargs: dict[str, Any],
-) -> AnyStream | GifStream | Mp4Stream | Path:
+) -> AnyStream | GifStream | Mp4Stream | HtmlStream | Path:
     """
     Create a stream from the given resources.
 
@@ -36,16 +37,10 @@ def stream(
         uri = Path(uri)
 
     extension = extension or (uri and uri.suffix)
-    if extension not in (None, ".mp4", ".gif"):
+    if isinstance(extension, str) and extension not in extension_handlers:
         raise ValueError(f"Unsupported extension: {extension}")
 
-    if extension == ".mp4":
-        stream_cls = Mp4Stream
-    elif extension == ".gif":
-        stream_cls = GifStream
-    else:
-        stream_cls = AnyStream
-
+    stream_cls = getattr(streams, extension_handlers.get(extension), AnyStream)
     serialized = serialize_appropriately(
         stream_cls,
         resources,
@@ -54,7 +49,6 @@ def stream(
         renderer_kwargs or {},
         **kwargs,
     )
-
     stream = stream_cls(**serialized.param.values(), **serialized.kwargs)
 
     if uri:
@@ -63,7 +57,7 @@ def stream(
 
 
 def connect(
-    streams: list[AnyStream | GifStream | Mp4Stream],
+    streams: list[AnyStream | GifStream | Mp4Stream | HtmlStream],
     uri: str | Path | BytesIO | None = None,
 ) -> ConnectedStreams | Path:
     """
