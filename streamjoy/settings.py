@@ -12,6 +12,8 @@ config = {
     "intro_background": "black",
     # from_url
     "max_files": 2,
+    # download
+    "parent_depth": 4,
     # matplotlib
     "max_open_warning": 100,
     # holoviews
