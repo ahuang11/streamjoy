@@ -81,6 +81,7 @@ nav:
         - Gender gapminder: example_recipes/gender_gapminder.md
         - Stream code: example_recipes/stream_code.md
         - Nice orbit: example_recipes/nice_orbit.md
+        - NMME forecast: example_recipes/nmme_forecast.md
     - API reference:
         - Core: api_reference/core.md
         - Models: api_reference/models.md
