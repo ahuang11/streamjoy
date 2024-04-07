@@ -1150,7 +1150,7 @@ class HtmlStream(MediaStream):
                             align-self: center;
                         }
                         """
-                    ]
+                    ],
                 )
                 self._column.param.update(
                     min_height=300,
@@ -1178,8 +1178,12 @@ class HtmlStream(MediaStream):
                 str(i),
                 pn.pane.Image(
                     image,
-                    width=(self.width or image.width) if sizing_mode == "fixed" else None,
-                    height=(self.height or image.height) if sizing_mode == "fixed" else None,
+                    width=(self.width or image.width)
+                    if sizing_mode == "fixed"
+                    else None,
+                    height=(self.height or image.height)
+                    if sizing_mode == "fixed"
+                    else None,
                     sizing_mode=self.sizing_mode,
                 ),
             )
