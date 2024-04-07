@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import time
 import logging
+import time
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
@@ -129,7 +129,9 @@ def wrap_holoviews(
             if backend == "bokeh":
                 from bokeh.io.export import get_screenshot_as_png
 
-                retries = _utils.get_config_default("num_retries", num_retries, warn=False)
+                retries = _utils.get_config_default(
+                    "num_retries", num_retries, warn=False
+                )
                 for r in range(retries):
                     try:
                         driver = _utils.get_webdriver(webdriver)
@@ -145,7 +147,7 @@ def wrap_holoviews(
                         break
                     except Exception as e:
                         logging.warning(
-                            f"Failed to save image: {e}, retrying in {i * 2}s"
+                            f"Failed to save image: {e}, retrying in {r * 2}s"
                         )
                         time.sleep(r * 2)
                         if r == retries - 1:
