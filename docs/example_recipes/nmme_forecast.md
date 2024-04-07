@@ -11,10 +11,11 @@
 Highlights:
 
 - Writes to memory to later use in another Panel component
+- Sets `extension` to hint at the desired output format
 - Appends two streams in a `Tabs` layout
 - Links the Players' value from the first tab to the second tab
 
-```python hl_lines="29 37 38"
+```python hl_lines="30 36 37 38"
 import panel as pn
 import pandas as pd
 from streamjoy import stream
