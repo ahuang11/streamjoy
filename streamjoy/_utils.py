@@ -33,7 +33,7 @@ def update_logger(
     format: str | None = None,
     datefmt: str | None = None,
 ) -> logging.Logger:
-    success_level = config["logging_level"]
+    success_level = config["logging_success_level"]
 
     class CustomLogger(logging.Logger):
         def success(self, message, *args, **kws):

@@ -1,17 +1,18 @@
+import panel as pn
 import pytest
 from imageio.v3 import improps
 
 from streamjoy.models import Paused
-from streamjoy.streams import GifStream, Mp4Stream
+from streamjoy.streams import GifStream, HtmlStream, Mp4Stream
 from streamjoy.wrappers import wrap_matplotlib
 
 
 class AbstractTestMediaStream:
-    def _assert_stream_and_props(self, sj, stream_cls):
+    def _assert_stream_and_props(self, sj, stream_cls, max_frames=3):
         assert isinstance(sj, stream_cls)
         buf = sj.write()
         props = improps(buf)
-        props.n_images == 3
+        props.n_images == max_frames
         return props
 
     def test_from_numpy(self, stream_cls, array):
@@ -75,9 +76,7 @@ class AbstractTestMediaStream:
 
     def test_write_max_frames(self, stream_cls, df):
         sj = stream_cls.from_pandas(df, max_frames=3)
-        buf = sj.write(max_frames=2)
-        props = improps(buf)
-        assert props.n_images == 2
+        self._assert_stream_and_props(sj, stream_cls, max_frames=3)
 
 
 class TestGifStream(AbstractTestMediaStream):
@@ -108,3 +107,39 @@ class TestMp4Stream(AbstractTestMediaStream):
         buf = stream_cls.from_pandas(df, renderer=renderer).write()
         props = improps(buf)
         assert props.n_images == 9
+
+
+class TestHtmlStream(AbstractTestMediaStream):
+    def _assert_stream_and_props(self, sj, stream_cls, max_frames=3):
+        assert isinstance(sj, stream_cls)
+        buf = sj.write()
+        assert isinstance(buf, pn.Column)
+        tabs = buf[0]
+        assert isinstance(tabs, pn.Tabs)
+        image = tabs[0]
+        assert isinstance(image, pn.pane.Image)
+        assert len(tabs) == max_frames
+        player = buf[1]
+        assert isinstance(player, pn.widgets.Player)
+
+        assert tabs.width == image.width + 50
+        assert buf.height == image.height + 100
+        return image
+
+    @pytest.fixture(scope="class")
+    def stream_cls(self):
+        return HtmlStream
+
+    def test_holoviews_matplotlib_backend(self, stream_cls, ds):
+        sj = stream_cls.from_holoviews(
+            ds.hvplot("lon", "lat", fig_size=200, backend="matplotlib")
+        )
+        image = self._assert_stream_and_props(sj, stream_cls)
+        assert image.width == 700
+
+    def test_holoviews_bokeh_backend(self, stream_cls, ds):
+        sj = stream_cls.from_holoviews(
+            ds.hvplot("lon", "lat", width=300, backend="bokeh")
+        )
+        image = self._assert_stream_and_props(sj, stream_cls)
+        assert image.width == 300

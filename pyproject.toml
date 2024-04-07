@@ -41,6 +41,7 @@ dependencies = [
     "bs4",
     "selenium",
     "webdriver_manager",
+    "panel",
 ]
 
 [tool.hatch.envs.default.scripts]

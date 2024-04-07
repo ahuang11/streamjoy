@@ -56,7 +56,7 @@ def client():
 def default_config():
     config["fps"] = 1
     config["max_frames"] = 3
-    config["max_files"] = 2
+    config["max_files"] = 3
     config["ending_pause"] = 0
 
 

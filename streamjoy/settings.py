@@ -36,12 +36,19 @@ config = {
     "display": True,
     # logging
     "logging_success_level": 25,
-    "logging_level": 25,
+    "logging_level": 20,
     "logging_format": "[%(levelname)s] %(asctime)s: %(message)s",
     "logging_datefmt": "%I:%M%p",
     "logging_warning_color": "\x1b[31;1m",
     "logging_success_color": "\x1b[32;1m",
     "logging_reset_color": "\x1b[0m",
+}
+
+extension_handlers = {
+    None: "AnyStream",
+    ".mp4": "Mp4Stream",
+    ".gif": "GifStream",
+    ".html": "HtmlStream",
 }
 
 obj_handlers = {

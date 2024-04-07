@@ -4,6 +4,7 @@ import base64
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
+from contextlib import contextmanager
 from functools import partial
 from io import BytesIO
 from itertools import zip_longest
@@ -30,7 +31,7 @@ from .serializers import (
     serialize_url,
     serialize_xarray,
 )
-from .settings import config
+from .settings import config, extension_handlers
 
 if TYPE_CHECKING:
     try:
@@ -52,6 +53,11 @@ if TYPE_CHECKING:
         import holoviews as hv
     except ImportError:
         hv = None
+
+    try:
+        import panel as pn
+    except ImportError:
+        pn = None
 
 
 class MediaStream(param.Parameterized):
@@ -382,6 +388,11 @@ class MediaStream(param.Parameterized):
             path.parent.mkdir(parents=True, exist_ok=True)
         return path
 
+    def _open_buffer(
+        self, uri: str | Path | BytesIO, mode: str, extension: str | None = None
+    ) -> PluginV3:
+        return iio.imopen(uri, mode, extension=extension)
+
     @abstractmethod
     def _write_images(
         self, buf: PluginV3, images: list[Future], **write_kwargs
@@ -586,7 +597,7 @@ class MediaStream(param.Parameterized):
             resources, renderer, renderer_iterables, renderer_kwargs
         )
         outdated = isinstance(uri, Path) and uri.exists()
-        with iio.imopen(uri, "w", extension=self._extension) as buf:
+        with self._open_buffer(uri, "w", extension=self._extension) as buf:
             self._write_images(buf, images, **self.write_kwargs)
         del images
         del resources
@@ -994,24 +1005,19 @@ class AnyStream(MediaStream):
 
     def materialize(
         self, uri: Path | BytesIO, extension: str | None = None
-    ) -> Mp4Stream | GifStream:
+    ) -> MediaStream:
         """
-        Materialize the stream into an Mp4Stream or GifStream.
+        Materialize the stream into an Mp4Stream, GifStream, or HtmlStream.
         """
         if isinstance(uri, BytesIO) and extension is None:
             extension = ".mp4"
         elif extension is None:
             extension = uri.suffix
 
-        if extension == ".mp4":
-            stream_cls = Mp4Stream
-        elif extension == ".gif":
-            stream_cls = GifStream
-        else:
-            raise ValueError(
-                f"Unsupported file extension {extension!r}; "
-                "expected '.mp4' or '.gif'."
-            )
+        if isinstance(extension, str) and extension not in extension_handlers:
+            raise ValueError(f"Unsupported extension: {extension}")
+
+        stream_cls = getattr(locals(), extension_handlers.get(extension), Mp4Stream)
         stream = stream_cls(**self.param.values())
         return stream
 
@@ -1034,6 +1040,137 @@ class AnyStream(MediaStream):
         uri = self._validate_uri(uri or BytesIO(), match_extension=False)
         stream = self.materialize(uri, extension)
         return stream.write(uri=uri, resources=resources, **kwargs)
+
+
+class HtmlStream(MediaStream):
+    _extension = ".html"
+
+    def __init__(self, **params) -> None:
+        import panel as pn
+
+        pn.extension()
+        super().__init__(**params)
+        self._column = pn.Column()
+
+    @contextmanager
+    def _open_buffer(
+        self, uri: str | Path | BytesIO, mode: str, extension: str | None = None
+    ):
+        import panel as pn
+
+        tabs = pn.Tabs(
+            tabs_location="right",
+            stylesheets=[
+                """
+                .bk-header {
+                    opacity: 0.1; /* Initially hide the element */
+                    transition: opacity 0.5s ease; /* Smooth transition for the opacity change */
+                }
+
+                .bk-header:hover {
+                    opacity: 1; /* Make the element fully visible on hover */
+                }
+                """
+            ],  # noqa: E501
+        )
+        yield tabs
+        image = tabs.objects[0]
+        width = image.width
+        height = image.height
+        tabs.param.update(
+            width=width + 50,
+            height=height,
+        )
+        player = pn.widgets.Player(
+            name="Time",
+            start=0,
+            end=len(tabs) - 1,
+            value=0,
+            loop_policy="loop",
+            interval=int(1000 / self.fps),
+            width=width,
+            stylesheets=[
+                """
+                :host(.bk-panel-models-widgets-Player) {
+                    opacity: 0.1;
+                    transition: opacity 0.5s ease;
+                }
+
+                :host(.bk-panel-models-widgets-Player:hover) {
+                    opacity: 1;
+                }
+                """
+            ],
+        )
+        player.jslink(tabs, value="active", bidirectional=True)
+        self._column.objects = [tabs, player]
+        self._column.param.update(
+            width=width,
+            height=height + 100,
+        )
+        self._column.save(uri)
+
+    def _write_images(self, buf: pn.Tabs, images: list[Future], **write_kwargs) -> None:
+        import panel as pn
+        from PIL import Image
+
+        intro_frame = self._create_intro(images)
+        self._prepend_intro(buf, intro_frame, **write_kwargs)
+
+        for i, image in enumerate(images):
+            image = Image.fromarray(_utils.get_result(image))
+
+            pause = None
+            if isinstance(image, Paused):
+                pause = image.seconds
+                image = image.output
+
+            image_tuple = (
+                str(i),
+                pn.pane.Image(
+                    image,
+                    width=image.width,
+                    height=image.height,
+                ),
+            )
+            buf.append(image_tuple, **write_kwargs)
+
+            if pause is not None:
+                _utils.repeat_frame(
+                    buf.append, image_tuple, pause, self.fps, **write_kwargs
+                )
+
+            if i == len(images) - 1:
+                _utils.repeat_frame(
+                    buf.append,
+                    image_tuple,
+                    self.ending_pause,
+                    self.fps,
+                    **write_kwargs,
+                )
+            del image
+
+    def write(
+        self,
+        uri: str | Path | BytesIO | None = None,
+        resources: Any | None = None,
+        **kwargs: dict[str, Any],
+    ) -> Path | BytesIO:
+        """
+        Write the player stream to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            resources: The resources to write to the file or in memory.
+            **kwargs: Additional keyword arguments to pass.
+
+        Returns:
+            The file path or BytesIO object.
+        """
+        uri = self._validate_uri(uri)
+        uri = super().write(uri=uri, resources=resources, **kwargs)
+        self._display_in_notebook(self._column, display=self.display)
+        return uri if not isinstance(uri, BytesIO) else self._column
 
 
 class ConnectedStreams(param.Parameterized):
