@@ -43,7 +43,7 @@ from streamjoy import stream
 if __name__ == "__main__":
     URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
     resources = [URL_FMT.format(i=i) for i in range(1, 11)]
-    stream(resources, uri="goes.gif")  # .gif and .mp4 supported
+    stream(resources, uri="goes.gif")  # .gif, .mp4, and .html supported
 ```
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/190ab753-00cf-4a0d-b8be-8a0b9b9e4443" width="500" height="500">
