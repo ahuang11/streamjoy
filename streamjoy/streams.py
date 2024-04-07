@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 import gc
 from abc import abstractmethod
-from contextlib import contextmanager
 from collections.abc import Iterable, Sequence
+from contextlib import contextmanager
 from functools import partial
 from io import BytesIO
 from itertools import zip_longest
@@ -1043,7 +1043,6 @@ class AnyStream(MediaStream):
 
 
 class HtmlStream(MediaStream):
-
     _extension = ".html"
 
     def __init__(self, **params) -> None:
@@ -1112,7 +1111,7 @@ class HtmlStream(MediaStream):
         self._column.save(uri)
 
     def _write_images(
-        self, buf: "pn.Tabs", images: list[Future], **write_kwargs
+        self, buf: pn.Tabs, images: list[Future], **write_kwargs
     ) -> None:
         import panel as pn
         from PIL import Image

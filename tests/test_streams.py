@@ -1,9 +1,9 @@
-import pytest
 import panel as pn
+import pytest
 from imageio.v3 import improps
 
 from streamjoy.models import Paused
-from streamjoy.streams import GifStream, Mp4Stream, HtmlStream
+from streamjoy.streams import GifStream, HtmlStream, Mp4Stream
 from streamjoy.wrappers import wrap_matplotlib
 
 

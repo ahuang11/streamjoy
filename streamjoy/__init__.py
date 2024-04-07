@@ -9,7 +9,7 @@ from .renderers import (
     default_xarray_renderer,
 )
 from .settings import config, file_handlers, obj_handlers
-from .streams import GifStream, Mp4Stream, HtmlStream
+from .streams import GifStream, HtmlStream, Mp4Stream
 from .wrappers import wrap_holoviews, wrap_matplotlib
 
 __version__ = "0.0.6"

@@ -4,10 +4,11 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Literal
 
-from .serializers import serialize_appropriately
-from .streams import AnyStream, ConnectedStreams, GifStream, Mp4Stream, HtmlStream
-from .settings import extension_handlers
 from . import streams
+from .serializers import serialize_appropriately
+from .settings import extension_handlers
+from .streams import AnyStream, ConnectedStreams, GifStream, HtmlStream, Mp4Stream
+
 
 def stream(
     resources: Any,

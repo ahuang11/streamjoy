@@ -442,6 +442,7 @@ def serialize_url(
     file_handler = kwargs.pop("file_handler", None)
     file_handler_kwargs = kwargs.pop("file_handler_kwargs", None)
 
+    logging.info(f"Retrieving resources from {base_url!r}.")
     response = requests.get(resources)
     content_type = response.headers.get("Content-Type")
 
@@ -475,6 +476,7 @@ def serialize_url(
         threads_per_worker=kwargs.get("threads_per_worker"),
     )
 
+    logging.info(f"Downloading {len(urls)} files from {base_url!r}.")
     futures = _utils.map_over(
         client,
         _utils.download_file,
