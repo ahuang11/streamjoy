@@ -9,9 +9,9 @@ from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-import param
 import imageio.v3 as iio
 import numpy as np
+import param
 from dask.distributed import Client, Future, get_client
 
 from .models import Paused

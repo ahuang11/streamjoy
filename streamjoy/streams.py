@@ -1045,7 +1045,6 @@ class AnyStream(MediaStream):
 
 
 class HtmlStream(MediaStream):
-
     _extension = ".html"
 
     def __init__(self, **params) -> None:
