@@ -36,7 +36,7 @@ config = {
     "display": True,
     # logging
     "logging_success_level": 25,
-    "logging_level": 25,
+    "logging_level": 20,
     "logging_format": "[%(levelname)s] %(asctime)s: %(message)s",
     "logging_datefmt": "%I:%M%p",
     "logging_warning_color": "\x1b[31;1m",

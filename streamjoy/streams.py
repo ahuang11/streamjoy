@@ -1110,9 +1110,7 @@ class HtmlStream(MediaStream):
         )
         self._column.save(uri)
 
-    def _write_images(
-        self, buf: pn.Tabs, images: list[Future], **write_kwargs
-    ) -> None:
+    def _write_images(self, buf: pn.Tabs, images: list[Future], **write_kwargs) -> None:
         import panel as pn
         from PIL import Image
 
