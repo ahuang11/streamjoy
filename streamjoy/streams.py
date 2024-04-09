@@ -783,6 +783,9 @@ class Mp4Stream(MediaStream):
             init_kwargs["fps"] = self.fps
             buf.init_video_stream(self.codec, **init_kwargs)
 
+        if "crf" in write_kwargs:
+            buf._video_stream.options = {'crf': str(write_kwargs.pop("crf"))}
+
         intro_frame = self._create_intro(images)
         self._prepend_intro(buf, intro_frame, **write_kwargs)
 
