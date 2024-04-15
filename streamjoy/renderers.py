@@ -163,6 +163,14 @@ def default_holoviews_renderer(
         kwargs["toolbar"] = None
     elif backend == "matplotlib":
         kwargs["cbar_extend"] = kwargs.get("cbar_extend", "both")
-    hv_obj.opts(**kwargs)
+
+    if isinstance(hv_obj, hv.Overlay):
+        for hv_el in hv_obj:
+            try:
+                hv_el.opts(**kwargs)
+            except Exception:
+                pass
+    else:
+        hv_obj.opts(**kwargs)
 
     return hv_obj
