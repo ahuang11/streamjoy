@@ -16,6 +16,7 @@ import dask.delayed
 import imageio.v3 as iio
 import numpy as np
 import param
+from dask.diagnostics import ProgressBar
 from dask.distributed import Client, Future, fire_and_forget
 from imageio.core.v3_plugin_api import PluginV3
 from PIL import Image, ImageDraw
@@ -168,6 +169,11 @@ class MediaStream(param.Parameterized):
         doc="The number of threads to use per worker.",
     )
 
+    show_progress = param.Boolean(
+        default=True,
+        doc="Whether to show the progress bar when rendering.",
+    )
+
     scratch_dir = param.Path(
         doc="The directory to use for temporary files.", check_exists=False
     )
@@ -201,6 +207,7 @@ class MediaStream(param.Parameterized):
                 params["_tbd_kwargs"][param_key] = params.pop(param_key)
 
         super().__init__(**params)
+        self._progress_bar = ProgressBar(minimum=3 if self.show_progress else np.inf)
 
     @classmethod
     def from_numpy(
@@ -416,7 +423,7 @@ class MediaStream(param.Parameterized):
                 f"got {resources=!r}."
             ) from exc
 
-        if renderer:
+        if renderer and not renderer.__name__.startswith("default"):
             try:
                 iterable_0 = [iterable[0] for iterable in renderer_iterables]
                 renderer(resource_0, *iterable_0, **renderer_kwargs)
@@ -446,7 +453,8 @@ class MediaStream(param.Parameterized):
                 renderer(resource, *iterable, **renderer_kwargs)
                 for resource, *iterable in zip_longest(resources, *renderer_iterables)
             ]
-            resources = dask.compute(jobs, scheduler="threads")[0]
+            with self._progress_bar:
+                resources = dask.compute(jobs, scheduler="threads")[0]
         resource_0 = _utils.get_result(_utils.get_first(resources))
 
         is_like_image = isinstance(resource_0, np.ndarray) and resource_0.ndim == 3
@@ -784,7 +792,7 @@ class Mp4Stream(MediaStream):
             buf.init_video_stream(self.codec, **init_kwargs)
 
         if "crf" in write_kwargs:
-            buf._video_stream.options = {'crf': str(write_kwargs.pop("crf"))}
+            buf._video_stream.options = {"crf": str(write_kwargs.pop("crf"))}
 
         intro_frame = self._create_intro(images)
         self._prepend_intro(buf, intro_frame, **write_kwargs)
