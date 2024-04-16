@@ -1050,6 +1050,24 @@ class AnyStream(MediaStream):
 class HtmlStream(MediaStream):
     _extension = ".html"
 
+    width = param.Integer(default=None, bounds=(1, None), doc="The width of the image.")
+    height = param.Integer(
+        default=None, bounds=(1, None), doc="The height of the image."
+    )
+    sizing_mode = param.Selector(
+        default="scale_width",
+        objects=[
+            "fixed",
+            "stretch_width",
+            "stretch_height",
+            "stretch_both",
+            "scale_width",
+            "scale_height",
+            "scale_both",
+        ],
+        doc="The sizing mode of the image.",
+    )
+
     def __init__(self, **params) -> None:
         import panel as pn
 
@@ -1068,7 +1086,7 @@ class HtmlStream(MediaStream):
             stylesheets=[
                 """
                 .bk-header {
-                    opacity: 0.1; /* Initially hide the element */
+                    opacity: 0.2; /* Initially hide the element */
                     transition: opacity 0.5s ease; /* Smooth transition for the opacity change */
                 }
 
@@ -1078,26 +1096,16 @@ class HtmlStream(MediaStream):
                 """
             ],  # noqa: E501
         )
-        yield tabs
-        image = tabs.objects[0]
-        width = image.width
-        height = image.height
-        tabs.param.update(
-            width=width + 50,
-            height=height,
-        )
         player = pn.widgets.Player(
             name="Time",
             start=0,
-            end=len(tabs) - 1,
             value=0,
             loop_policy="loop",
             interval=int(1000 / self.fps),
-            width=width,
             stylesheets=[
                 """
                 :host(.bk-panel-models-widgets-Player) {
-                    opacity: 0.1;
+                    opacity: 0.2;
                     transition: opacity 0.5s ease;
                 }
 
@@ -1109,10 +1117,48 @@ class HtmlStream(MediaStream):
         )
         player.jslink(tabs, value="active", bidirectional=True)
         self._column.objects = [tabs, player]
-        self._column.param.update(
-            width=width,
-            height=height + 100,
-        )
+        yield tabs
+        image = tabs.objects[0]
+        width = image.object.width
+        height = image.object.height
+        with param.parameterized.batch_call_watchers(self):
+            if self.sizing_mode == "fixed":
+                tabs.param.update(
+                    width=width + 50,
+                    height=height,
+                )
+                player.param.update(
+                    width=width,
+                    end=len(tabs) - 1,
+                )
+                self._column.param.update(
+                    width=width,
+                    height=height + 100,
+                )
+            else:
+                sizing_mode = self.sizing_mode.replace("both", "width")
+                tabs.param.update(
+                    min_height=300,
+                    max_height=int(height * 1.5),
+                    sizing_mode=sizing_mode,
+                )
+                player.param.update(
+                    max_height=150,
+                    max_width=450,
+                    sizing_mode=sizing_mode,
+                    end=len(tabs) - 1,
+                    stylesheets=[
+                        """
+                        :host {
+                            align-self: center;
+                        }
+                        """
+                    ],
+                )
+                self._column.param.update(
+                    min_height=300,
+                    max_height=int(height * 1.5),
+                )
         self._column.save(uri)
 
     def _write_images(self, buf: pn.Tabs, images: list[Future], **write_kwargs) -> None:
@@ -1130,12 +1176,20 @@ class HtmlStream(MediaStream):
                 pause = image.seconds
                 image = image.output
 
+            sizing_mode = self.sizing_mode
             image_tuple = (
                 str(i),
                 pn.pane.Image(
                     image,
-                    width=image.width,
-                    height=image.height,
+                    width=(
+                        (self.width or image.width) if sizing_mode == "fixed" else None
+                    ),
+                    height=(
+                        (self.height or image.height)
+                        if sizing_mode == "fixed"
+                        else None
+                    ),
+                    sizing_mode=self.sizing_mode,
                 ),
             )
             buf.append(image_tuple, **write_kwargs)
@@ -1172,9 +1226,9 @@ class HtmlStream(MediaStream):
         Returns:
             The file path or BytesIO object.
         """
+        self._display_in_notebook(self._column, display=self.display)
         uri = self._validate_uri(uri)
         uri = super().write(uri=uri, resources=resources, **kwargs)
-        self._display_in_notebook(self._column, display=self.display)
         return uri if not isinstance(uri, BytesIO) else self._column
 
 

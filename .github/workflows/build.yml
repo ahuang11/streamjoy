@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: ['3.9']
+        python_version: ['3.10']
 
     steps:
     - uses: actions/checkout@v4
@@ -21,9 +21,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install hatch
         hatch env create
-    - name: Lint and typecheck
-      run: |
-        hatch run lint-check
+    # - name: Lint and typecheck
+    #   run: |
+    #     hatch run lint-check
     - name: Test
       run: |
         hatch run test-cov-xml

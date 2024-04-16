@@ -121,9 +121,6 @@ class TestHtmlStream(AbstractTestMediaStream):
         assert len(tabs) == max_frames
         player = buf[1]
         assert isinstance(player, pn.widgets.Player)
-
-        assert tabs.width == image.width + 50
-        assert buf.height == image.height + 100
         return image
 
     @pytest.fixture(scope="class")
@@ -135,11 +132,23 @@ class TestHtmlStream(AbstractTestMediaStream):
             ds.hvplot("lon", "lat", fig_size=200, backend="matplotlib")
         )
         image = self._assert_stream_and_props(sj, stream_cls)
-        assert image.width == 700
+        assert image.width is None
 
     def test_holoviews_bokeh_backend(self, stream_cls, ds):
         sj = stream_cls.from_holoviews(
             ds.hvplot("lon", "lat", width=300, backend="bokeh")
         )
         image = self._assert_stream_and_props(sj, stream_cls)
+        assert image.width is None
+
+    def test_fixed_width_height(self, stream_cls, df):
+        sj = stream_cls.from_pandas(df, width=300, height=300, sizing_mode="fixed")
+        image = self._assert_stream_and_props(sj, stream_cls)
         assert image.width == 300
+        assert image.height == 300
+
+    def test_stretch_width(self, stream_cls, df):
+        sj = stream_cls.from_pandas(df, height=300, sizing_mode="stretch_width")
+        image = self._assert_stream_and_props(sj, stream_cls)
+        assert image.width is None
+        assert image.height is None
