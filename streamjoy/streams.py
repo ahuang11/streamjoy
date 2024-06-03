@@ -72,6 +72,7 @@ class MediaStream(param.Parameterized):
     resources = param.List(
         default=None,
         doc="The resources to render.",
+        precedence=0
     )
 
     renderer = param.Callable(

@@ -86,3 +86,6 @@ dependencies = [
 [project.urls]
 Documentation = "https://ahuang11.github.io/streamjoy/"
 Source = "https://github.com/ahuang11/streamjoy"
+
+[project.scripts]
+streamjoy = "streamjoy.cli:main"
