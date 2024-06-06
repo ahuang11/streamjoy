@@ -26,7 +26,7 @@ Or, try out a basic web app version here:
 
 https://huggingface.co/spaces/ahuang11/streamjoy
 
-<img width="1010" alt="image" src="https://github.com/ahuang11/streamjoy/assets/15331990/8ebb9626-12ef-40f8-8950-039cdd41c78e">
+<img src="https://github.com/ahuang11/streamjoy/assets/15331990/b2e62e5a-b6ba-48a5-863f-6a8c5d4c2887" width="500">
 
 ## 🛠️ Built-in features
 
