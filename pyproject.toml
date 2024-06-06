@@ -89,3 +89,12 @@ Source = "https://github.com/ahuang11/streamjoy"
 
 [project.scripts]
 streamjoy = "streamjoy.cli:main"
+
+[project.optional-dependencies]
+ui = [
+    "panel",
+    "param",
+    "requests",
+    "xarray",
+    "netcdf4",
+]

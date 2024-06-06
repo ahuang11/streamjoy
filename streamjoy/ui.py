@@ -13,7 +13,6 @@ except ImportError:
     )
 
 from .core import stream
-from .streams import HtmlStream
 
 
 class App(pn.viewable.Viewer):
@@ -22,6 +21,8 @@ class App(pn.viewable.Viewer):
         label="URL",
         default="https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/images/2024/01_Jan/",
     )
+
+    max_files = param.Integer(bounds=(0, 1000), default=10)
 
     pattern = param.String(default="N_202401{DAY:02d}_conc_v3.0.png")
 
@@ -37,6 +38,9 @@ class App(pn.viewable.Viewer):
         super().__init__(**params)
         url_input = pn.widgets.TextInput.from_param(
             self.param.url, placeholder="Enter URL"
+        )
+        max_files_input = pn.widgets.Spinner.from_param(
+            self.param.max_files, name="Max Files"
         )
         pattern_input = pn.widgets.TextInput.from_param(
             self.param.pattern, placeholder="Enter pattern (e.g. *.png or {0}.png)"
@@ -70,8 +74,10 @@ class App(pn.viewable.Viewer):
         input_widgets = pn.Card(
             url_input,
             pattern_input,
+            max_files_input,
             self._pattern_view,
             title="Inputs",
+            sizing_mode="stretch_width"
         )
         submit_button = pn.widgets.Button(
             on_click=self._on_submit,
@@ -89,7 +95,7 @@ class App(pn.viewable.Viewer):
         extension_input = pn.widgets.Select.from_param(
             self.param.extension, sizing_mode="stretch_width"
         )
-        sidebar = pn.Column(
+        self._sidebar = pn.Column(
             pn.Row(submit_button, self._download_button),
             extension_input,
             input_widgets,
@@ -97,7 +103,7 @@ class App(pn.viewable.Viewer):
         self._main = pn.Column()
         self._dashboard = pn.template.FastListTemplate(
             title="StreamJoy",
-            sidebar=[sidebar],
+            sidebar=[self._sidebar],
             main=[self._main],
         )
         self._update_pattern_preview()
@@ -130,15 +136,6 @@ class App(pn.viewable.Viewer):
         else:
             self._pattern_view.visible = False
 
-    @param.depends("extension")
-    def _update_download_button(self):
-        if self.extension == ".html":
-            self._download_button.filename = "streamjoy.html"
-        elif self.extension == ".mp4":
-            self._download_button.filename = "streamjoy.mp4"
-        elif self.extension == ".gif":
-            self._download_button.filename = "streamjoy.gif"
-
     @param.depends("pattern", "pattern_inputs_start", "pattern_inputs_end", watch=True)
     def _update_pattern_preview(self):
         pattern = self.pattern
@@ -157,46 +154,52 @@ class App(pn.viewable.Viewer):
             )
 
     def _on_submit(self, event):
-        if self.url:
-            stream_kwargs = {}
-            if self._pattern_view.visible:
-                pattern = self.pattern
-                pattern_formats = self._extract_templates(pattern)
-                if pattern_formats is not None:
-                    url = self.url
-                    if not url.endswith("/"):
-                        url += "/"
-                    pattern_format_key = pattern_formats.group(1)
-                    pattern_inputs_start = self.pattern_inputs_start
-                    pattern_inputs_end = self.pattern_inputs_end
-                    resources = []
-                    for pattern_input in range(
-                        pattern_inputs_start, pattern_inputs_end + 1
-                    ):
-                        resource = self.url + pattern.format(
-                            **{pattern_format_key: pattern_input}
-                        )
-                        resources.append(resource)
-            else:
-                resources = [self.url]
-                stream_kwargs["pattern"] = self.pattern
+        with self._sidebar.param.update(loading=True):
+            if self.url:
+                stream_kwargs = {}
+                if self._pattern_view.visible:
+                    pattern = self.pattern
+                    pattern_formats = self._extract_templates(pattern)
+                    if pattern_formats is not None:
+                        url = self.url
+                        if not url.endswith("/"):
+                            url += "/"
+                        pattern_format_key = pattern_formats.group(1)
+                        pattern_inputs_start = self.pattern_inputs_start
+                        pattern_inputs_end = self.pattern_inputs_end
+                        resources = []
+                        for pattern_input in range(
+                            pattern_inputs_start, pattern_inputs_end + 1
+                        ):
+                            resource = self.url + pattern.format(
+                                **{pattern_format_key: pattern_input}
+                            )
+                            resources.append(resource)
+                else:
+                    resources = self.url
+                    stream_kwargs["pattern"] = self.pattern
+                    stream_kwargs["max_files"] = self.max_files
 
-            output = stream(
-                resources, extension=self.extension, **stream_kwargs
-            ).write()
+                if self.extension == ".html":
+                    stream_kwargs["ending_pause"] = 0
+                
+                output = stream(
+                    resources, extension=self.extension, **stream_kwargs
+                ).write()
 
-            if self.extension == ".html":
-                self._main.objects = [output]
-                buf = BytesIO()
-                output.save(buf)
-                buf.seek(0)
-                self._buf = buf
-            else:
-                self._main.objects = [pn.pane.GIF(output)]
-                self._buf = output
-            self._download_button.disabled = False
+                if self.extension == ".html":
+                    self._main.objects = [output]
+                    buf = BytesIO()
+                    output.save(buf)
+                    self._buf = buf
+                else:
+                    self._main.objects = [pn.pane.GIF(output)]
+                    self._buf = output
+                self._download_button.disabled = False
 
     def _download(self):
+        self._download_button.filename = f"streamjoy{self.extension}"
+        self._buf.seek(0)
         return self._buf
 
     def serve(self, port: int = 8888, show: bool = True, **kwargs):
