@@ -22,6 +22,12 @@ pip install streamjoy
 
 <img src="https://github.com/ahuang11/streamjoy/assets/15331990/7c5db7fe-498d-4282-b082-d7f8b36eb915" width="500">
 
+Or, try out a basic web app version here:
+
+https://huggingface.co/spaces/ahuang11/streamjoy
+
+<img width="1010" alt="image" src="https://github.com/ahuang11/streamjoy/assets/15331990/8ebb9626-12ef-40f8-8950-039cdd41c78e">
+
 ## 🛠️ Built-in features
 
 - 🌐 Animate from URLs, files, and datasets
