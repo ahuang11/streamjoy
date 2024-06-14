@@ -344,12 +344,13 @@ def serialize_holoviews(
 
     backend = kwargs.get("backend", hv.Store.current_backend)
 
-    def _select_element(hv_obj, key):
+    def _select_element(key, hv_obj=None):
+        hv.extension(backend)
         try:
             resource = hv_obj[key]
         except Exception:
             resource = hv_obj.select(**{kdims[0].name: key})
-        return resource
+        return resource.opts(title=str(key), backend=backend)
 
     hv_obj = resources
     if isinstance(hv_obj, (hv.core.spaces.DynamicMap, hv.core.spaces.HoloMap)):
@@ -371,7 +372,25 @@ def serialize_holoviews(
     if len(kdims) > 1:
         raise ValueError("Can only handle 1D HoloViews objects.")
 
-    resources = [_select_element(hv_obj, key).opts(title=str(key)) for key in keys]
+    # if isinstance(hv_map, hv.core.spaces.DynamicMap):
+    #     logging.warning(
+    #         "HoloViews DynamicMap objects may be slow to serialize "
+    #         "due to the need to render each frame individually..."
+    #     )
+    resources = [
+        _select_element(key, hv_obj=hv_obj)
+        for key in keys[: kwargs.get("max_frames")]
+    ]
+    # else:
+    #     client = _utils.get_distributed_client()
+    #     resources = _utils.map_over(
+    #         client,
+    #         _select_element,
+    #         keys[: kwargs.get("max_frames")],
+    #         kwargs.get("batch_size"),
+    #         hv_obj=hv_obj,
+    #         wait=True
+    #     )
 
     renderer_kwargs = renderer_kwargs or {}
     renderer_kwargs.update(_utils.pop_from_cls(stream_cls, kwargs))
@@ -603,6 +622,7 @@ def serialize_appropriately(
         obj_handler = _select_obj_handler(resources)
         _utils.validate_renderer_iterables(resources, renderer_iterables)
 
+        kwargs["max_frames"] = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
         serialized = obj_handler(
             stream_cls,
             resources,

@@ -7,12 +7,10 @@ from collections.abc import Iterable, Sequence
 from contextlib import contextmanager
 from functools import partial
 from io import BytesIO
-from itertools import zip_longest
 from pathlib import Path
 from textwrap import indent
 from typing import TYPE_CHECKING, Any, Callable
 
-import dask.delayed
 import imageio.v3 as iio
 import numpy as np
 import param
@@ -439,23 +437,17 @@ class MediaStream(param.Parameterized):
                 in_memory=self.in_memory,
             )
 
-        if renderer and self.processes:
+        if renderer:
             resources = _utils.map_over(
                 self.client,
                 renderer,
                 resources,
                 batch_size,
+                processes=self.processes,
+                progress_bar=self._progress_bar,
                 *renderer_iterables,
                 **renderer_kwargs,
             )
-        elif renderer and not self.processes:
-            renderer = dask.delayed(renderer)
-            jobs = [
-                renderer(resource, *iterable, **renderer_kwargs)
-                for resource, *iterable in zip_longest(resources, *renderer_iterables)
-            ]
-            with self._progress_bar:
-                resources = dask.compute(jobs, scheduler="threads")[0]
         resource_0 = _utils.get_result(_utils.get_first(resources))
 
         is_like_image = isinstance(resource_0, np.ndarray) and resource_0.ndim == 3

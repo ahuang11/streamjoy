@@ -8,11 +8,14 @@ from io import BytesIO
 from itertools import islice
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
+from itertools import zip_longest
 
 import imageio.v3 as iio
 import numpy as np
 import param
-from dask.distributed import Client, Future, get_client
+import dask
+from dask.distributed import Client, Future, get_client as _get_client
+from dask.diagnostics import ProgressBar
 
 from .models import Paused
 from .settings import config
@@ -122,7 +125,7 @@ def get_distributed_client(client: Client | None = None, **kwargs) -> Client:
         return client
 
     try:
-        client = get_client()
+        client = _get_client()
     except ValueError:
         client = Client(**kwargs)
     return client
@@ -184,9 +187,10 @@ def get_first(iterable):
     return next(islice(iterable, 0, 1), None)
 
 
-def get_result(future: Future) -> Any:
+def get_result(future: Future, timeout: int | None = None) -> Any:
+    timeout = get_config_default("timeout", timeout, warn=False)
     if isinstance(future, Future):
-        return future.result(timeout=30)
+        return future.result(timeout=timeout)
     elif hasattr(future, "compute"):
         return future.compute()
     else:
@@ -292,13 +296,28 @@ def validate_renderer_iterables(
         )
 
 
-def map_over(client, func, resources, batch_size, *args, **kwargs):
-    try:
-        return client.map(func, resources, *args, batch_size=batch_size, **kwargs)
-    except TypeError:
-        return [
-            client.submit(func, resource, *args, **kwargs) for resource in resources
+def map_over(client, func, resources, batch_size, *args, processes=True, wait=False, progress_bar=None, **kwargs):
+    num_retries = get_config_default("num_retries", None, warn=False)
+    if processes:
+        try:
+            resources = client.map(func, resources, *args, batch_size=batch_size, retries=num_retries, **kwargs)
+        except TypeError:
+            resources = [
+                client.submit(func, resource, *args, **kwargs) for resource in resources
+            ]
+        if wait:
+            resources = client.gather(resources)
+    else:
+        func = dask.delayed(func)
+        jobs = [
+            func(resource, *iterable, **kwargs)
+            for resource, *iterable in zip_longest(resources, *args)
         ]
+        if not progress_bar:
+            progress_bar = ProgressBar(minimum=3)
+        with progress_bar:
+            resources = dask.compute(jobs, scheduler="threads")[0]
+    return resources
 
 
 def repeat_frame(

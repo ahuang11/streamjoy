@@ -3,6 +3,7 @@ config = {
     "fps": 8,
     "max_frames": 50,
     # dask
+    "timeout": 30,
     "batch_size": 10,
     "processes": True,
     "threads_per_worker": None,
