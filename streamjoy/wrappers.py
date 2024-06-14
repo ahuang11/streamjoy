@@ -7,7 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable
 
-from dask.distributed import get_worker
+from dask.distributed import get_worker, Lock
 
 from . import _utils
 from .models import Paused
@@ -136,7 +136,8 @@ def wrap_holoviews(
                 for r in range(retries):
                     try:
                         worker = get_worker()
-                        with worker._lock:
+                        lock = Lock(worker.id)
+                        with lock:
                             if not hasattr(worker, "_driver"):
                                 worker._driver = _utils.get_webdriver(webdriver)
                             driver = worker._driver
