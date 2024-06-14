@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Callable
 
 from dask.distributed import get_worker
-from dask.distributed import Lock
 
 from . import _utils
 from .models import Paused
@@ -129,9 +128,7 @@ def wrap_holoviews(
                 fsspec_fs=fsspec_fs,
             )
             if backend == "bokeh":
-                import os
                 from bokeh.io.export import get_screenshot_as_png
-                from bokeh.io.webdriver import webdriver_control
 
                 retries = _utils.get_config_default(
                     "num_retries", num_retries, warn=False
@@ -139,10 +136,9 @@ def wrap_holoviews(
                 for r in range(retries):
                     try:
                         worker = get_worker()
-                        lock = Lock(worker.id)
-                        with lock:
+                        with worker._lock:
                             if not hasattr(worker, "_driver"):
-                                worker._driver = webdriver_control.create()
+                                worker._driver = _utils.get_webdriver(webdriver)
                             driver = worker._driver
                             image = get_screenshot_as_png(
                                 hv.render(hv_obj, backend=backend), driver=driver
@@ -154,7 +150,7 @@ def wrap_holoviews(
                                 image.save(uri, format="png")
                             break
                     except Exception as e:
-                        seconds = r * 5
+                        seconds = r * 2
                         logging.warning(
                             f"Failed to save image: {e}, retrying in {seconds}s"
                         )

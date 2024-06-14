@@ -410,5 +410,4 @@ def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
             f"Webdriver {webdriver_key} not supported; "
             f"use 'chrome' or 'firefox', or pass a custom callable."
         )
-    print("CREATED WEBDRIVER")
     return driver
