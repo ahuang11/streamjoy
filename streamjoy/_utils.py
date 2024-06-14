@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import inspect
 import logging
 import os
@@ -370,10 +371,12 @@ def get_webdriver_path(webdriver: str):
         from webdriver_manager.chrome import ChromeDriverManager
 
         webdriver_path = ChromeDriverManager().install()
+        os.environ["BOKEH_CHROMEDRIVER_PATH"] = webdriver_path
     elif webdriver.lower() == "firefox":
         from webdriver_manager.firefox import GeckoDriverManager
 
         webdriver_path = GeckoDriverManager().install()
+        os.environ["geckodriver"] = webdriver_path
     return webdriver_path
 
 
@@ -400,12 +403,12 @@ def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
         options.add_argument("--headless")
         options.add_argument("--disable-extensions")
         webdriver_path = webdriver_path or get_webdriver_path("firefox")
-        driver = WebDriver(service=Service(webdriver_path), options=options)
+        driver = WebDriver(service=Service(webdriver_path, port=random.randint(4000, 5000)), options=options)
 
     else:
         raise NotImplementedError(
             f"Webdriver {webdriver_key} not supported; "
             f"use 'chrome' or 'firefox', or pass a custom callable."
         )
-
+    print("CREATED WEBDRIVER")
     return driver
