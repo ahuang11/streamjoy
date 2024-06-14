@@ -186,7 +186,7 @@ def get_first(iterable):
 
 def get_result(future: Future) -> Any:
     if isinstance(future, Future):
-        return future.result()
+        return future.result(timeout=30)
     elif hasattr(future, "compute"):
         return future.compute()
     else:

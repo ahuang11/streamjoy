@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from packaging import version
 from inspect import isgenerator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
@@ -399,12 +400,14 @@ def serialize_holoviews(
             clims=clims,
         )
 
-    if kwargs.get("processes"):
-        logging.warning(
-            "HoloViews rendering does not support processes; "
-            "setting processes=False."
-        )
-    kwargs["processes"] = False
+    if version.parse(hv.__version__) < version.parse("1.19.0"):
+        if kwargs.get("processes"):
+            logging.warning(
+                "HoloViews<1.19.0 rendering does not support processes; "
+                "setting processes=False; to use processes, upgrade wih "
+                "`pip install 'holoviews>=1.19.0'`"
+            )
+        kwargs["processes"] = False
     return Serialized(resources, renderer, renderer_iterables, renderer_kwargs, kwargs)
 
 

@@ -112,6 +112,7 @@ def wrap_holoviews(
             import holoviews as hv
 
             backend = kwargs.get("backend", hv.Store.current_backend)
+            hv.extension(backend)
             output = renderer(*args, **kwargs)
 
             hv_obj = output

@@ -1105,7 +1105,7 @@ class HtmlStream(MediaStream):
                 """
             ],  # noqa: E501
         )
-        player = pn.widgets.Player(
+        self._player = pn.widgets.Player(
             name="Time",
             start=0,
             value=0,
@@ -1124,8 +1124,8 @@ class HtmlStream(MediaStream):
                 """
             ],
         )
-        player.jslink(tabs, value="active", bidirectional=True)
-        self._column.objects = [tabs, player]
+        self._player.jslink(tabs, value="active", bidirectional=True)
+        self._column.objects = [tabs, self._player]
         yield tabs
         image = tabs.objects[0]
         width = image.object.width
@@ -1136,7 +1136,7 @@ class HtmlStream(MediaStream):
                     width=width + 50,
                     height=height,
                 )
-                player.param.update(
+                self._player.param.update(
                     width=width,
                     end=len(tabs) - 1,
                 )
@@ -1151,7 +1151,7 @@ class HtmlStream(MediaStream):
                     max_height=int(height * 1.5),
                     sizing_mode=sizing_mode,
                 )
-                player.param.update(
+                self._player.param.update(
                     max_height=150,
                     max_width=450,
                     sizing_mode=sizing_mode,
@@ -1216,6 +1216,7 @@ class HtmlStream(MediaStream):
                     self.fps,
                     **write_kwargs,
                 )
+            self._player.end = len(buf)
             del image
 
     def write(
