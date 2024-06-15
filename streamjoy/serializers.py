@@ -372,26 +372,13 @@ def serialize_holoviews(
     if len(kdims) > 1:
         raise ValueError("Can only handle 1D HoloViews objects.")
 
-    # if isinstance(hv_map, hv.core.spaces.DynamicMap):
-    #     logging.warning(
-    #         "HoloViews DynamicMap objects may be slow to serialize "
-    #         "due to the need to render each frame individually..."
-    #     )
+    # TODO: experiment with this as keys instead and push holoviews object as iterables
+    # for i in range(nframes):
+    #     plot.update(i)
     resources = [
         _select_element(key, hv_obj=hv_obj)
         for key in keys[: kwargs.get("max_frames")]
     ]
-    # else:
-    #     client = _utils.get_distributed_client()
-    #     resources = _utils.map_over(
-    #         client,
-    #         _select_element,
-    #         keys[: kwargs.get("max_frames")],
-    #         kwargs.get("batch_size"),
-    #         hv_obj=hv_obj,
-    #         wait=True
-    #     )
-
     renderer_kwargs = renderer_kwargs or {}
     renderer_kwargs.update(_utils.pop_from_cls(stream_cls, kwargs))
 
