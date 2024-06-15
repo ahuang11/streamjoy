@@ -136,20 +136,29 @@ def wrap_holoviews(
                 for r in range(retries):
                     try:
                         worker = get_worker()
-                        lock = Lock(worker.id)
-                        with lock:
-                            if not hasattr(worker, "_driver"):
-                                worker._driver = _utils.get_webdriver(webdriver)
-                            driver = worker._driver
-                            image = get_screenshot_as_png(
-                                hv.render(hv_obj, backend=backend), driver=driver
-                            )
-                            if fsspec_fs:
-                                with fsspec_fs.open(uri, "wb") as f:
-                                    image.save(f, format="png")
+                        if not hasattr(worker, "_drivers"):
+                            worker._drivers = set([_utils.get_webdriver(webdriver) for _ in range(worker.state.nthreads)])
+
+                        driver = None
+                        while driver is None:
+                            for worker_driver in worker._drivers:
+                                if worker_driver.current_url in ("data:,", "about:blank"):
+                                    print(worker.id, worker_driver.current_url)
+                                    driver = worker_driver
+                                    break
                             else:
-                                image.save(uri, format="png")
-                            break
+                                time.sleep(0.5)
+
+                        image = get_screenshot_as_png(
+                            hv.render(hv_obj, backend=backend), driver=driver
+                        )
+                        if fsspec_fs:
+                            with fsspec_fs.open(uri, "wb") as f:
+                                image.save(f, format="png")
+                        else:
+                            image.save(uri, format="png")
+                        driver.get("about:blank")
+                        break
                     except Exception as e:
                         seconds = r * 2
                         logging.warning(

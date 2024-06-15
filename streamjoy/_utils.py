@@ -15,7 +15,7 @@ import imageio.v3 as iio
 import numpy as np
 import param
 import dask
-from dask.distributed import Client, Future, get_client as _get_client
+from dask.distributed import Client, Future, get_client as _get_client, get_worker as _get_worker
 from dask.diagnostics import ProgressBar
 
 from .models import Paused
@@ -411,3 +411,9 @@ def get_webdriver(webdriver: tuple[str, str] | Callable) -> BaseWebDriver:
             f"use 'chrome' or 'firefox', or pass a custom callable."
         )
     return driver
+
+
+def cleanup_driver(driver: BaseWebDriver):
+    worker = _get_worker()
+    for driver in getattr(worker, "_drivers", []):
+        driver.quit()
