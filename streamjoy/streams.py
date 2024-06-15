@@ -438,16 +438,22 @@ class MediaStream(param.Parameterized):
             )
 
         if renderer:
-            resources = _utils.map_over(
-                self.client,
-                renderer,
-                resources,
-                batch_size,
-                processes=self.processes,
-                progress_bar=self._progress_bar,
-                *renderer_iterables,
-                **renderer_kwargs,
-            )
+            try:
+                resources = _utils.map_over(
+                    self.client,
+                    renderer,
+                    resources,
+                    batch_size,
+                    processes=self.processes,
+                    progress_bar=self._progress_bar,
+                    *renderer_iterables,
+                    **renderer_kwargs,
+                )
+            finally:
+                self.client.map(
+                    _utils.cleanup_driver,
+                    range(len(self.client.scheduler_info()["workers"])),
+                )
         resource_0 = _utils.get_result(_utils.get_first(resources))
 
         is_like_image = isinstance(resource_0, np.ndarray) and resource_0.ndim == 3
