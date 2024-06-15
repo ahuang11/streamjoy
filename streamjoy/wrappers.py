@@ -7,6 +7,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable
 
+from dask.distributed import get_worker, Lock
+
 from . import _utils
 from .models import Paused
 from .settings import config
@@ -98,7 +100,6 @@ def wrap_holoviews(
     Returns:
         The wrapped function.
     """
-
     webdriver = _utils.get_config_default("webdriver", webdriver, warn=False)
     if isinstance(webdriver, str):
         webdriver = (webdriver, _utils.get_webdriver_path(webdriver))
@@ -110,8 +111,8 @@ def wrap_holoviews(
         @wraps(renderer)
         def wrapped(*args, **kwargs) -> Path | BytesIO:
             import holoviews as hv
-
             backend = kwargs.get("backend", hv.Store.current_backend)
+            hv.extension(backend)
             output = renderer(*args, **kwargs)
 
             hv_obj = output
@@ -134,22 +135,27 @@ def wrap_holoviews(
                 )
                 for r in range(retries):
                     try:
-                        driver = _utils.get_webdriver(webdriver)
-                        with driver:
+                        worker = get_worker()
+                        lock = Lock(worker.id)
+                        with lock:
+                            if not hasattr(worker, "_driver"):
+                                worker._driver = _utils.get_webdriver(webdriver)
+                            driver = worker._driver
                             image = get_screenshot_as_png(
                                 hv.render(hv_obj, backend=backend), driver=driver
                             )
-                        if fsspec_fs:
-                            with fsspec_fs.open(uri, "wb") as f:
-                                image.save(f, format="png")
-                        else:
-                            image.save(uri, format="png")
-                        break
+                            if fsspec_fs:
+                                with fsspec_fs.open(uri, "wb") as f:
+                                    image.save(f, format="png")
+                            else:
+                                image.save(uri, format="png")
+                            break
                     except Exception as e:
+                        seconds = r * 2
                         logging.warning(
-                            f"Failed to save image: {e}, retrying in {r * 2}s"
+                            f"Failed to save image: {e}, retrying in {seconds}s"
                         )
-                        time.sleep(r * 2)
+                        time.sleep(seconds)
                         if r == retries - 1:
                             raise e
             else:

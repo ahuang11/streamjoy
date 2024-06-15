@@ -3,6 +3,7 @@ config = {
     "fps": 8,
     "max_frames": 50,
     # dask
+    "timeout": 120,
     "batch_size": 10,
     "processes": True,
     "threads_per_worker": None,
@@ -17,7 +18,7 @@ config = {
     # matplotlib
     "max_open_warning": 100,
     # holoviews
-    "webdriver": "firefox",
+    "webdriver": "chrome",
     "num_retries": 5,
     # output
     "in_memory": False,
