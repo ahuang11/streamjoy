@@ -119,7 +119,7 @@ def serialize_xarray(
     dim = kwargs.pop("dim", None)
     var = kwargs.pop("var", None)
 
-    ds = _utils.validate_xarray(ds, dim=dim, var=var)
+    ds = _utils.validate_xarray(ds, dim=dim, var=var, raise_ndim=renderer is None)
     if not dim:
         dim = list(ds.dims)[0]
         _utils.warn_default_used("dim", dim, suffix="from the dataset")
