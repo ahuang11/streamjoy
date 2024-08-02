@@ -249,6 +249,7 @@ def validate_xarray(
     dim: str | None = None,
     var: str | None = None,
     warn: bool = True,
+    raise_ndim: bool = True,
 ):
     import xarray as xr
 
@@ -262,7 +263,7 @@ def validate_xarray(
 
     squeeze_dims = [d for d in ds.dims if d != dim and ds.sizes[d] == 1]
     ds = ds.squeeze(squeeze_dims)
-    if ds.ndim > 3:
+    if ds.ndim > 3 and raise_ndim:
         raise ValueError(f"Can only handle 3D arrays; {ds.ndim}D array found")
     return ds
 
