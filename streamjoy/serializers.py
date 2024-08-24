@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from packaging import version
 from inspect import isgenerator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
@@ -343,12 +344,13 @@ def serialize_holoviews(
 
     backend = kwargs.get("backend", hv.Store.current_backend)
 
-    def _select_element(hv_obj, key):
+    def _select_element(key, hv_obj=None):
+        hv.extension(backend)
         try:
             resource = hv_obj[key]
         except Exception:
             resource = hv_obj.select(**{kdims[0].name: key})
-        return resource
+        return resource.opts(title=str(key), backend=backend)
 
     hv_obj = resources
     if isinstance(hv_obj, (hv.core.spaces.DynamicMap, hv.core.spaces.HoloMap)):
@@ -370,8 +372,13 @@ def serialize_holoviews(
     if len(kdims) > 1:
         raise ValueError("Can only handle 1D HoloViews objects.")
 
-    resources = [_select_element(hv_obj, key).opts(title=str(key)) for key in keys]
-
+    # TODO: experiment with this as keys instead and push holoviews object as iterables
+    # for i in range(nframes):
+    #     plot.update(i)
+    resources = [
+        _select_element(key, hv_obj=hv_obj)
+        for key in keys[: kwargs.get("max_frames")]
+    ]
     renderer_kwargs = renderer_kwargs or {}
     renderer_kwargs.update(_utils.pop_from_cls(stream_cls, kwargs))
 
@@ -399,12 +406,14 @@ def serialize_holoviews(
             clims=clims,
         )
 
-    if kwargs.get("processes"):
-        logging.warning(
-            "HoloViews rendering does not support processes; "
-            "setting processes=False."
-        )
-    kwargs["processes"] = False
+    if version.parse(hv.__version__) < version.parse("1.19.0"):
+        if kwargs.get("processes"):
+            logging.warning(
+                "HoloViews<1.19.0 rendering does not support processes; "
+                "setting processes=False; to use processes, upgrade wih "
+                "`pip install 'holoviews>=1.19.0'`"
+            )
+        kwargs["processes"] = False
     return Serialized(resources, renderer, renderer_iterables, renderer_kwargs, kwargs)
 
 
@@ -600,6 +609,7 @@ def serialize_appropriately(
         obj_handler = _select_obj_handler(resources)
         _utils.validate_renderer_iterables(resources, renderer_iterables)
 
+        kwargs["max_frames"] = _utils.get_max_frames(len(resources), kwargs.get("max_frames"))
         serialized = obj_handler(
             stream_cls,
             resources,
