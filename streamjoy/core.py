@@ -7,7 +7,7 @@ from typing import Any, Callable, Literal
 from . import streams
 from .serializers import serialize_appropriately
 from .settings import extension_handlers
-from .streams import AnyStream, ConnectedStreams, GifStream, HtmlStream, Mp4Stream
+from .streams import AnyStream, ConnectedStreams, GifStream, HtmlStream, Mp4Stream, SideBySideStreams
 
 
 def stream(
@@ -76,6 +76,32 @@ def connect(
         The connected streams if uri is None, otherwise the uri.
     """
     stream = ConnectedStreams(streams=streams)
+    if uri:
+        return stream.write(uri=uri)
+    return stream
+
+
+def side_by_side(
+    streams: list[AnyStream | GifStream | Mp4Stream | HtmlStream],
+    uri: str | Path | BytesIO | None = None,
+) -> SideBySideStreams | Path:
+    """
+    Render heterogeneous streams side by side (horizontally concatenated).
+
+    Frames from each stream are combined horizontally to create a single
+    animation with multiple streams playing simultaneously. If streams have
+    different numbers of frames, the shorter streams will repeat their last
+    frame to match the longest stream.
+
+    Args:
+        streams: The streams to render side by side.
+        uri: The destination to write the side-by-side streams to.
+            If None, the side-by-side streams object is returned.
+
+    Returns:
+        The side-by-side streams if uri is None, otherwise the uri.
+    """
+    stream = SideBySideStreams(streams=streams)
     if uri:
         return stream.write(uri=uri)
     return stream

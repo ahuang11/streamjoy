@@ -1371,3 +1371,195 @@ class ConnectedStreams(param.Parameterized):
         Iterate over the streams.
         """
         return self.streams
+
+
+class SideBySideStreams(param.Parameterized):
+    """
+    Multiple streams rendered side by side (horizontally concatenated).
+    """
+
+    streams = param.List(
+        default=[],
+        item_type=MediaStream,
+        doc="The streams to render side by side.",
+    )
+
+    def __init__(self, streams: list[MediaStream] | None = None, **params) -> None:
+        params["streams"] = streams or params.get("streams")
+        self.logger = _utils.update_logger()
+        super().__init__(**params)
+
+    def write(
+        self,
+        uri: str | Path | BytesIO | None = None,
+        extension: str | None = None,
+        **kwargs: dict[str, Any],
+    ) -> Path | BytesIO:
+        """
+        Write the side-by-side streams to a file or in memory.
+
+        Args:
+            uri: The file path or BytesIO object to write to.
+            extension: The file extension to use.
+            **kwargs: Additional keyword arguments to pass.
+
+        Returns:
+            The file path or BytesIO object.
+        """
+        if uri is None:
+            uri = BytesIO()
+        elif isinstance(uri, str):
+            uri = Path(uri)
+
+        streams = [
+            (
+                stream.materialize(uri, extension)
+                if isinstance(stream, AnyStream)
+                else stream
+            )
+            for stream in self.streams
+        ]
+
+        client = _utils.get_distributed_client(
+            client=kwargs.get("client"),
+            processes=kwargs.get("processes"),
+            threads_per_worker=kwargs.get("threads_per_worker"),
+        )
+
+        stream_0 = streams[0]
+        extension = stream_0._extension
+
+        # Render all stream images
+        all_images = []
+        for stream in streams:
+            stream.client = client
+            resources, renderer_iterables = _utils.subset_resources_renderer_iterables(
+                stream.resources, stream.renderer_iterables, stream.max_frames
+            )
+            images = stream._render_images(
+                resources,
+                stream.renderer,
+                renderer_iterables,
+                stream.renderer_kwargs,
+            )
+            all_images.append(images)
+
+        # Get the maximum number of frames across all streams
+        max_frames = max(len(images) for images in all_images)
+
+        # Combine frames side by side
+        combined_images = []
+        for frame_idx in range(max_frames):
+            frame_arrays = []
+            max_height = 0
+
+            # Collect frames from each stream for this index
+            for stream_idx, images in enumerate(all_images):
+                if frame_idx < len(images):
+                    # Get the frame
+                    frame = _utils.get_result(images[frame_idx])
+                else:
+                    # Use last frame if this stream has fewer frames
+                    frame = _utils.get_result(images[-1])
+
+                # Handle Paused frames
+                if isinstance(frame, Paused):
+                    frame = frame.output
+
+                # Convert to numpy array if it's a PIL Image
+                if isinstance(frame, Image.Image):
+                    frame = np.array(frame)
+
+                frame_arrays.append(frame)
+                max_height = max(max_height, frame.shape[0])
+
+            # Pad frames to same height if needed
+            padded_frames = []
+            for frame in frame_arrays:
+                if frame.shape[0] < max_height:
+                    # Pad vertically with black
+                    pad_height = max_height - frame.shape[0]
+                    if len(frame.shape) == 3:
+                        # RGB/RGBA image
+                        padding = np.zeros((pad_height, frame.shape[1], frame.shape[2]), dtype=frame.dtype)
+                    else:
+                        # Grayscale image
+                        padding = np.zeros((pad_height, frame.shape[1]), dtype=frame.dtype)
+                    frame = np.vstack([frame, padding])
+                padded_frames.append(frame)
+
+            # Concatenate horizontally
+            combined_frame = np.hstack(padded_frames)
+            combined_images.append(combined_frame)
+
+        # Write combined frames to output
+        duration = []
+        if isinstance(stream_0, GifStream):
+            # Calculate duration for all frames
+            duration = [int(1000 / stream_0.fps)] * len(combined_images)
+
+        write_kwargs = stream_0.write_kwargs.copy()
+        
+        with iio.imopen(uri, "w", extension=extension) as buf:
+            if isinstance(stream_0, GifStream):
+                write_kwargs["duration"] = duration
+                for frame in combined_images:
+                    buf.write(frame, **write_kwargs)
+            elif isinstance(stream_0, Mp4Stream):
+                # Initialize video stream for MP4
+                init_kwargs = _utils.pop_kwargs(buf.init_video_stream, write_kwargs)
+                init_kwargs["fps"] = stream_0.fps
+                buf.init_video_stream(stream_0.codec, **init_kwargs)
+                
+                if "crf" in write_kwargs:
+                    buf._video_stream.options = {"crf": str(write_kwargs.pop("crf"))}
+                
+                for frame in combined_images:
+                    # Ensure dimensions are even for MP4
+                    if frame.shape[0] % 2:
+                        frame = frame[:-1, :, :]
+                    if frame.shape[1] % 2:
+                        frame = frame[:, :-1, :]
+                    frame = frame[:, :, :3]  # remove alpha channel if present
+                    buf.write_frame(frame, **write_kwargs)
+            else:
+                # For other stream types
+                for i, frame in enumerate(combined_images):
+                    write_kwargs["init"] = i == 0
+                    buf.write(frame, **write_kwargs)
+
+        # Optimize GIF if needed
+        if isinstance(stream_0, GifStream) and stream_0.optimize:
+            stream_0._optimize_gif(uri)
+
+        green = config["logging_success_color"]
+        reset = config["logging_reset_color"]
+        if isinstance(uri, Path):
+            self.logger.success(f"Saved stream to {green}{uri.absolute()}{reset}.")
+        else:
+            self.logger.success(f"Saved stream to {green}memory{reset}.")
+        stream_0._display_in_notebook(uri, display=stream_0.display)
+        return uri
+
+    def __repr__(self) -> str:
+        repr_str = (
+            f"<{self.__class__.__name__}>\n"
+            f"---\n"
+            f"Streams (side by side):\n"
+            f"{indent(repr(self.streams[0]), ' ' * 2)}\n"
+            f"  ...\n"
+            f"{indent(repr(self.streams[-1]), ' ' * 2)}\n"
+        )
+        return repr_str
+
+    def __len__(self) -> int:
+        """
+        Return the maximum number of frames across all streams.
+        """
+        return max(len(stream) for stream in self.streams) if self.streams else 0
+
+    def __iter__(self) -> Iterable[Path]:
+        """
+        Iterate over the streams.
+        """
+        return self.streams
