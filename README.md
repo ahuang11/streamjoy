@@ -47,12 +47,12 @@ Stream from a list of images--local files work too!
 from streamjoy import stream
 
 if __name__ == "__main__":
-    URL_FMT = "https://www.goes.noaa.gov/dimg/jma/fd/vis/{i}.gif"
-    resources = [URL_FMT.format(i=i) for i in range(1, 11)]
-    stream(resources, uri="goes.gif")  # .gif, .mp4, and .html supported
+    URL_FMT = "https://www.cpc.ncep.noaa.gov/products/NMME/archive/2025090800/current/images/NMME_ensemble_tmpsfc_lead{i}.png"
+    resources = [URL_FMT.format(i=i) for i in range(1, 8)]
+    stream(resources, uri="nmme.gif")  # .gif, .mp4, and .html supported
 ```
 
-<img src="https://github.com/ahuang11/streamjoy/assets/15331990/190ab753-00cf-4a0d-b8be-8a0b9b9e4443" width="500" height="500">
+![nmme](https://github.com/user-attachments/assets/ab9a3b5e-3b5c-4deb-b093-891adb936f0c)
 
 ### 💅 Polish up
 
@@ -61,6 +61,8 @@ Specify a few more keywords to:
 1. add an intro title and subtitle
 2. adjust the pauses
 3. optimize the GIF thru pygifsicle
+
+Note: This example no longer works because URL changed!
 
 ```python
 from streamjoy import stream
@@ -84,6 +86,8 @@ if __name__ == "__main__":
 ### 👀 Preview inputs
 
 If you'd like to preview the `repr` before writing, drop `uri`.
+
+Note: This example no longer works because URL changed!
 
 Output:
 ```yaml
@@ -124,6 +128,8 @@ himawari_stream.write()
 ### 🖇️ Connect streams
 
 Connect multiple streams together to provide further context.
+
+Note: This example no longer works because URL changed!
 
 ```python
 from streamjoy import stream, connect
