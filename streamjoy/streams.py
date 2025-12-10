@@ -3,14 +3,14 @@ from __future__ import annotations
 import base64
 import gc
 from abc import abstractmethod
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import contextmanager
 from functools import partial
 from io import BytesIO
 from itertools import zip_longest
 from pathlib import Path
 from textwrap import indent
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import dask.delayed
 import imageio.v3 as iio
@@ -69,11 +69,7 @@ class MediaStream(param.Parameterized):
     Expand Source code to see all the parameters and descriptions.
     """
 
-    resources = param.List(
-        default=None,
-        doc="The resources to render.",
-        precedence=0
-    )
+    resources = param.List(default=None, doc="The resources to render.", precedence=0)
 
     renderer = param.Callable(
         doc="The renderer to use for the resources.",
@@ -970,7 +966,7 @@ class GifStream(MediaStream):
         green = config["logging_success_color"]
         reset = config["logging_reset_color"]
         self.logger.success(
-            f"Optimized stream with pygifsicle at " f"{green}{uri.absolute()}{reset}."
+            f"Optimized stream with pygifsicle at {green}{uri.absolute()}{reset}."
         )
 
     def write(
@@ -1481,10 +1477,15 @@ class SideBySideStreams(param.Parameterized):
                     pad_height = max_height - frame.shape[0]
                     if len(frame.shape) == 3:
                         # RGB/RGBA image
-                        padding = np.zeros((pad_height, frame.shape[1], frame.shape[2]), dtype=frame.dtype)
+                        padding = np.zeros(
+                            (pad_height, frame.shape[1], frame.shape[2]),
+                            dtype=frame.dtype,
+                        )
                     else:
                         # Grayscale image
-                        padding = np.zeros((pad_height, frame.shape[1]), dtype=frame.dtype)
+                        padding = np.zeros(
+                            (pad_height, frame.shape[1]), dtype=frame.dtype
+                        )
                     frame = np.vstack([frame, padding])
                 padded_frames.append(frame)
 
@@ -1499,7 +1500,7 @@ class SideBySideStreams(param.Parameterized):
             duration = [int(1000 / stream_0.fps)] * len(combined_images)
 
         write_kwargs = stream_0.write_kwargs.copy()
-        
+
         with iio.imopen(uri, "w", extension=extension) as buf:
             if isinstance(stream_0, GifStream):
                 write_kwargs["duration"] = duration
@@ -1510,10 +1511,10 @@ class SideBySideStreams(param.Parameterized):
                 init_kwargs = _utils.pop_kwargs(buf.init_video_stream, write_kwargs)
                 init_kwargs["fps"] = stream_0.fps
                 buf.init_video_stream(stream_0.codec, **init_kwargs)
-                
+
                 if "crf" in write_kwargs:
                     buf._video_stream.options = {"crf": str(write_kwargs.pop("crf"))}
-                
+
                 for frame in combined_images:
                     # Ensure dimensions are even for MP4
                     if frame.shape[0] % 2:

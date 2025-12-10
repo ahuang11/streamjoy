@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from . import streams
 from .serializers import serialize_appropriately
 from .settings import extension_handlers
-from .streams import AnyStream, ConnectedStreams, GifStream, HtmlStream, Mp4Stream, SideBySideStreams
+from .streams import (
+    AnyStream,
+    ConnectedStreams,
+    GifStream,
+    HtmlStream,
+    Mp4Stream,
+    SideBySideStreams,
+)
 
 
 def stream(

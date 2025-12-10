@@ -1,7 +1,5 @@
 from io import BytesIO
-from pathlib import Path
 
-import pytest
 from imageio.v3 import improps
 
 from streamjoy.core import side_by_side, stream
@@ -13,9 +11,9 @@ class TestSideBySide:
         stream1 = stream(resources=df)
         stream2 = stream(resources=df)
         result = side_by_side(streams=[stream1, stream2])
-        assert isinstance(
-            result, SideBySideStreams
-        ), "Expected an instance of SideBySideStreams"
+        assert isinstance(result, SideBySideStreams), (
+            "Expected an instance of SideBySideStreams"
+        )
 
     def test_side_by_side_with_uri(self, df, tmp_path):
         stream1 = stream(resources=df)
@@ -28,9 +26,9 @@ class TestSideBySide:
         stream1 = stream(resources=df)
         stream2 = stream(resources=df)
         result = side_by_side(streams=[stream1, stream2], uri=BytesIO())
-        assert isinstance(
-            result, BytesIO
-        ), "Expected a BytesIO object when URI is a BytesIO instance"
+        assert isinstance(result, BytesIO), (
+            "Expected a BytesIO object when URI is a BytesIO instance"
+        )
 
     def test_side_by_side_gif(self, df, tmp_path):
         stream1 = stream(resources=df, extension=".gif")
