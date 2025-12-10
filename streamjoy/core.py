@@ -92,7 +92,7 @@ def connect(
 def side_by_side(
     streams: list[AnyStream | GifStream | Mp4Stream | HtmlStream],
     uri: str | Path | BytesIO | None = None,
-) -> SideBySideStreams | Path:
+) -> SideBySideStreams | Path | BytesIO:
     """
     Render heterogeneous streams side by side (horizontally concatenated).
 
@@ -107,7 +107,7 @@ def side_by_side(
             If None, the side-by-side streams object is returned.
 
     Returns:
-        The side-by-side streams if uri is None, otherwise the uri.
+        The side-by-side streams if uri is None, otherwise the uri (Path or BytesIO).
     """
     stream = SideBySideStreams(streams=streams)
     if uri:

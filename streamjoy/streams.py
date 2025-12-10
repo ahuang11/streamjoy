@@ -1556,10 +1556,14 @@ class SideBySideStreams(param.Parameterized):
     def __len__(self) -> int:
         """
         Return the maximum number of frames across all streams.
+        
+        Note: This differs from ConnectedStreams which returns the sum of frames.
+        For side-by-side streams, all streams play simultaneously, so the length
+        is the maximum frame count, not the sum.
         """
         return max(len(stream) for stream in self.streams) if self.streams else 0
 
-    def __iter__(self) -> Iterable[Path]:
+    def __iter__(self) -> Iterable[MediaStream]:
         """
         Iterate over the streams.
         """
